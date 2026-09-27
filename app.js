@@ -360,6 +360,7 @@ class LibiFitApp {
       title: '',
       notes: '',
       partner: '',
+      videoUrls: [''],
       videoUrl: '',
       isPlanned: false,
       color: '#06B6D4',
@@ -419,6 +420,30 @@ class LibiFitApp {
     } else if (!current.includes(name)) {
       input.value = current + ', ' + name;
     }
+  }
+
+  addWorkoutVideoUrl() {
+    if (!this.editingWorkout.videoUrls) {
+      this.editingWorkout.videoUrls = this.editingWorkout.videoUrl ? [this.editingWorkout.videoUrl] : [];
+    }
+    this.editingWorkout.videoUrls.push('');
+    this.render();
+  }
+
+  updateWorkoutVideoUrl(idx, val) {
+    if (!this.editingWorkout.videoUrls) {
+      this.editingWorkout.videoUrls = [''];
+    }
+    this.editingWorkout.videoUrls[idx] = val;
+  }
+
+  removeWorkoutVideoUrl(idx) {
+    if (!this.editingWorkout.videoUrls) return;
+    this.editingWorkout.videoUrls.splice(idx, 1);
+    if (this.editingWorkout.videoUrls.length === 0) {
+      this.editingWorkout.videoUrls.push('');
+    }
+    this.render();
   }
 
   loadTemplateIntoCurrentWorkout(tmplId) {
@@ -527,10 +552,20 @@ class LibiFitApp {
     if (!w.isPlanned && w.type === 'volleyball') {
       const partnerVal = document.getElementById('w-partner')?.value.trim() || '';
       w.partner = partnerVal;
-      w.videoUrl = document.getElementById('w-video')?.value.trim() || '';
       if (partnerVal) {
         partnerVal.split(',').forEach(p => this.saveTeammate(p.trim()));
       }
+    }
+
+    // Clean and normalize video URLs
+    if (Array.isArray(w.videoUrls)) {
+      w.videoUrls = w.videoUrls.map(u => (u || '').trim()).filter(Boolean);
+      w.videoUrl = w.videoUrls[0] || '';
+    } else if (w.videoUrl && w.videoUrl.trim()) {
+      w.videoUrls = [w.videoUrl.trim()];
+    } else {
+      w.videoUrls = [];
+      w.videoUrl = '';
     }
 
     w.color = w.color || getWorkoutColor(w);
@@ -555,11 +590,13 @@ class LibiFitApp {
     const target = this.workouts.find(w => w.id === id);
     if (!target) return;
 
+    const vUrls = getWorkoutVideoUrls(target);
     this.completingWorkout = {
       ...target,
       type: target.type === 'planned' ? 'volleyball' : (target.type || 'volleyball'),
       exercises: target.exercises || [],
       partner: target.partner || '',
+      videoUrls: vUrls.length > 0 ? [...vUrls] : [''],
       videoUrl: target.videoUrl || ''
     };
     this.openModal('completePlanned');
@@ -650,6 +687,30 @@ class LibiFitApp {
     this.completingWorkout.exercises[exIdx].sets[sIdx].reps = val;
   }
 
+  addCompletingVideoUrl() {
+    if (!this.completingWorkout.videoUrls) {
+      this.completingWorkout.videoUrls = this.completingWorkout.videoUrl ? [this.completingWorkout.videoUrl] : [];
+    }
+    this.completingWorkout.videoUrls.push('');
+    this.render();
+  }
+
+  updateCompletingVideoUrl(idx, val) {
+    if (!this.completingWorkout.videoUrls) {
+      this.completingWorkout.videoUrls = [''];
+    }
+    this.completingWorkout.videoUrls[idx] = val;
+  }
+
+  removeCompletingVideoUrl(idx) {
+    if (!this.completingWorkout.videoUrls) return;
+    this.completingWorkout.videoUrls.splice(idx, 1);
+    if (this.completingWorkout.videoUrls.length === 0) {
+      this.completingWorkout.videoUrls.push('');
+    }
+    this.render();
+  }
+
   saveCompletedPlannedWorkout() {
     const cw = this.completingWorkout;
     cw.startTime = document.getElementById('c-start-time')?.value || cw.startTime;
@@ -660,10 +721,20 @@ class LibiFitApp {
     if (cw.type === 'volleyball') {
       const partnerVal = document.getElementById('c-partner')?.value.trim() || '';
       cw.partner = partnerVal;
-      cw.videoUrl = document.getElementById('c-video')?.value.trim() || '';
       if (partnerVal) {
         partnerVal.split(',').forEach(p => this.saveTeammate(p.trim()));
       }
+    }
+
+    // Clean and normalize video URLs
+    if (Array.isArray(cw.videoUrls)) {
+      cw.videoUrls = cw.videoUrls.map(u => (u || '').trim()).filter(Boolean);
+      cw.videoUrl = cw.videoUrls[0] || '';
+    } else if (cw.videoUrl && cw.videoUrl.trim()) {
+      cw.videoUrls = [cw.videoUrl.trim()];
+    } else {
+      cw.videoUrls = [];
+      cw.videoUrl = '';
     }
 
     // Mark as NO LONGER planned!
@@ -689,6 +760,53 @@ class LibiFitApp {
     if (this.detailWorkout) {
       this.openModal('workoutDetail');
     }
+  }
+
+  shareWorkoutWhatsApp(workoutId) {
+    const w = this.workouts.find(item => item.id === workoutId) || this.detailWorkout || this.editingWorkout;
+    if (!w) return;
+
+    const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
+    const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
+    const dateFormatted = this.formatHebrewDate(w.date);
+    const videoUrls = getWorkoutVideoUrls(w);
+
+    let msg = `${cfg.emoji} *אימון ${cfg.name}: ${w.title || cfg.name}* ✨\n`;
+    msg += `📅 *תאריך:* ${dateFormatted}\n`;
+    if (timeDisplay) {
+      msg += `⏰ *שעות:* ${timeDisplay}\n`;
+    }
+
+    if (w.partner) {
+      msg += `👭 *שותפות לאימון:* ${w.partner}\n`;
+    }
+
+    if (w.exercises && w.exercises.length > 0) {
+      msg += `\n💪 *תרגילים שבוצעו:*\n`;
+      w.exercises.forEach(ex => {
+        const setsText = (ex.sets || []).map(s => {
+          const wText = ex.isBodyweight ? '(משקל גוף)' : (s.weight ? `${s.weight} ק"ג × ` : '');
+          return `${wText}${s.reps} חז'`;
+        }).join(', ');
+        msg += `• *${ex.name}:* ${setsText}\n`;
+      });
+    }
+
+    if (w.notes) {
+      msg += `\n📝 *הערות ודגשים:*\n${w.notes}\n`;
+    }
+
+    if (videoUrls.length > 0) {
+      msg += `\n🎥 *סרטוני וידאו (${videoUrls.length}):*\n`;
+      videoUrls.forEach((u, i) => {
+        msg += `${i + 1}. ${u}\n`;
+      });
+    }
+
+    msg += `\n📱 _נשלח מ-LibiFit 🏐💙_`;
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
   }
 
   deleteWorkout(id) {

@@ -319,3 +319,14 @@ function getWorkoutColor(w) {
   const cfg = SPORT_CONFIGS[w.type];
   return cfg ? cfg.accentColor : '#0EA5E9';
 }
+
+function getWorkoutVideoUrls(w) {
+  if (!w) return [];
+  if (Array.isArray(w.videoUrls)) {
+    return w.videoUrls.map(u => (u || '').trim()).filter(Boolean);
+  }
+  if (w.videoUrl && typeof w.videoUrl === 'string' && w.videoUrl.trim()) {
+    return [w.videoUrl.trim()];
+  }
+  return [];
+}

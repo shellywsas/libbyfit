@@ -4,6 +4,7 @@ function renderWorkoutDetailModal() {
   const w = app.detailWorkout;
   const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
   const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
+  const videoUrls = getWorkoutVideoUrls(w);
 
   return `
     <div class="p-4 border-b border-slate-100 flex items-center justify-between" style="background-color: ${cfg.lightBg};">
@@ -29,6 +30,14 @@ function renderWorkoutDetailModal() {
         </div>
       ` : ''}
 
+      <!-- WhatsApp Share Button -->
+      <button
+        onclick="app.shareWorkoutWhatsApp('${w.id}')"
+        class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95">
+        <i data-lucide="share-2" class="w-4 h-4"></i>
+        <span>שיתוף פרטי האימון לוואטסאפ 💬</span>
+      </button>
+
       ${w.partner ? `
         <div class="bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl flex items-center gap-2">
           <i data-lucide="users" class="w-4 h-4 text-cyan-600"></i>
@@ -39,15 +48,27 @@ function renderWorkoutDetailModal() {
         </div>
       ` : ''}
 
-      ${w.videoUrl ? `
-        <div class="bg-red-50 border border-red-100 p-2.5 rounded-xl flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i data-lucide="video" class="w-4 h-4 text-red-600"></i>
-            <span class="font-bold text-red-800">סרטון וידאו מצורף</span>
+      ${videoUrls.length > 0 ? `
+        <div class="bg-red-50/80 border border-red-200 p-3 rounded-2xl space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="video" class="w-4 h-4 text-red-600"></i>
+              <span class="font-bold text-red-900 text-xs">סרטוני וידאו מצורפים (${videoUrls.length}):</span>
+            </div>
           </div>
-          <a href="${w.videoUrl}" target="_blank" class="bg-red-600 text-white font-bold px-3 py-1 rounded-lg text-[11px] hover:bg-red-700">
-            צפי בסרטון 🔗
-          </a>
+          <div class="space-y-1.5">
+            ${videoUrls.map((url, idx) => `
+              <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-red-100 gap-2">
+                <span class="font-bold text-slate-700 flex items-center gap-1.5 text-xs truncate max-w-[200px]" dir="ltr">
+                  <span class="text-red-500 font-bold">▶ ${idx + 1}.</span> ${url.replace(/^https?:\/\/(www\.)?/, '')}
+                </span>
+                <a href="${url}" target="_blank" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded-lg text-[11px] shadow-2xs flex items-center gap-1 shrink-0 transition active:scale-95">
+                  <span>צפי</span>
+                  <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
+              </div>
+            `).join('')}
+          </div>
         </div>
       ` : ''}
 

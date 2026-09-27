@@ -161,9 +161,39 @@ function renderWorkoutFormModal() {
               </div>
             </div>
 
-            <div>
-              <label class="text-[11px] font-bold text-slate-600">קישור לווידאו של האימון / המשחק:</label>
-              <input type="url" id="w-video" value="${w.videoUrl || ''}" placeholder="https://..." class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 bg-white" dir="ltr">
+            <!-- Dynamic Multi-Video Links -->
+            <div class="space-y-2 pt-2 border-t border-cyan-200">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                  <i data-lucide="video" class="w-3.5 h-3.5 text-red-500"></i>
+                  <span>קישורי וידאו מהאימון / המשחק:</span>
+                </label>
+                <button type="button" onclick="app.addWorkoutVideoUrl()" class="text-[11px] bg-white text-cyan-700 border border-cyan-300 font-bold px-2 py-0.5 rounded-lg hover:bg-cyan-100 flex items-center gap-1 transition">
+                  <i data-lucide="plus" class="w-3 h-3"></i>
+                  <span>+ סרטון נוסף</span>
+                </button>
+              </div>
+
+              <div class="space-y-1.5" id="workout-videos-container">
+                ${((w.videoUrls && w.videoUrls.length > 0) ? w.videoUrls : (w.videoUrl ? [w.videoUrl] : [''])).map((url, vIdx, arr) => `
+                  <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-cyan-100">
+                    <span class="text-[10px] font-bold text-cyan-700 bg-cyan-50 w-5 h-5 rounded-full flex items-center justify-center shrink-0">${vIdx + 1}</span>
+                    <input
+                      type="url"
+                      value="${url || ''}"
+                      onchange="app.updateWorkoutVideoUrl(${vIdx}, this.value)"
+                      placeholder="קישור לסרטון ${vIdx + 1} (יוטיוב, דרייב וכו')..."
+                      class="flex-1 text-xs p-1.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                      dir="ltr">
+                    ${arr.length > 1 ? `
+                      <button type="button" onclick="app.removeWorkoutVideoUrl(${vIdx})" class="text-slate-300 hover:text-red-500 p-1 shrink-0" title="מחק קישור זה">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                      </button>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+              <p class="text-[10px] text-slate-400">ניתן להוסיף 2, 3 או יותר סרטונים לכל אימון כדורעף 🎥</p>
             </div>
           </div>
         ` : ''}
@@ -403,9 +433,39 @@ function renderCompletePlannedModal() {
             <label class="font-bold text-slate-600 block mb-1">עם מי שיחקת?</label>
             <input type="text" id="c-partner" value="${w.partner || ''}" placeholder="נועה, מאי, שירה..." class="w-full p-2 rounded-xl border border-slate-200 bg-white">
           </div>
-          <div>
-            <label class="font-bold text-slate-600 block mb-1">קישור לווידאו:</label>
-            <input type="url" id="c-video" value="${w.videoUrl || ''}" placeholder="https://..." class="w-full p-2 rounded-xl border border-slate-200 bg-white" dir="ltr">
+          <!-- Dynamic Multi-Video Links for Completing -->
+          <div class="space-y-2 pt-2 border-t border-cyan-200">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                <i data-lucide="video" class="w-3.5 h-3.5 text-red-500"></i>
+                <span>קישורי וידאו מהאימון / המשחק:</span>
+              </label>
+              <button type="button" onclick="app.addCompletingVideoUrl()" class="text-[11px] bg-white text-cyan-700 border border-cyan-300 font-bold px-2 py-0.5 rounded-lg hover:bg-cyan-100 flex items-center gap-1 transition">
+                <i data-lucide="plus" class="w-3 h-3"></i>
+                <span>+ סרטון נוסף</span>
+              </button>
+            </div>
+
+            <div class="space-y-1.5" id="completing-videos-container">
+              ${((w.videoUrls && w.videoUrls.length > 0) ? w.videoUrls : (w.videoUrl ? [w.videoUrl] : [''])).map((url, vIdx, arr) => `
+                <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-cyan-100">
+                  <span class="text-[10px] font-bold text-cyan-700 bg-cyan-50 w-5 h-5 rounded-full flex items-center justify-center shrink-0">${vIdx + 1}</span>
+                  <input
+                    type="url"
+                    value="${url || ''}"
+                    onchange="app.updateCompletingVideoUrl(${vIdx}, this.value)"
+                    placeholder="קישור לסרטון ${vIdx + 1}..."
+                    class="flex-1 text-xs p-1.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                    dir="ltr">
+                  ${arr.length > 1 ? `
+                    <button type="button" onclick="app.removeCompletingVideoUrl(${vIdx})" class="text-slate-300 hover:text-red-500 p-1 shrink-0" title="מחק קישור זה">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+            <p class="text-[10px] text-slate-400">ניתן להוסיף 2, 3 או יותר סרטונים לכל אימון כדורעף 🎥</p>
           </div>
         </div>
       ` : ''}

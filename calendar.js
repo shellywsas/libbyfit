@@ -333,6 +333,7 @@ function renderWorkoutCard(w, expanded = false) {
   const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
   const wColor = getWorkoutColor(w);
   const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
+  const videoUrls = getWorkoutVideoUrls(w);
 
   return `
     <div onclick="app.openWorkoutDetail('${w.id}')" class="cursor-pointer bg-white rounded-xl border border-slate-100 hover:border-slate-200 p-2.5 shadow-sm transition hover:shadow flex flex-col gap-1.5 relative overflow-hidden">
@@ -355,11 +356,18 @@ function renderWorkoutCard(w, expanded = false) {
             ${w.partner}
           </span>
         ` : ''}
-        ${w.videoUrl ? `
-          <a href="${w.videoUrl}" target="_blank" onclick="event.stopPropagation()" class="bg-red-50 text-red-600 hover:bg-red-100 px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px] font-semibold">
-            <i data-lucide="play-circle" class="w-3 h-3"></i>
-            וידאו
-          </a>
+        ${videoUrls.length > 0 ? `
+          ${videoUrls.length === 1 ? `
+            <a href="${videoUrls[0]}" target="_blank" onclick="event.stopPropagation()" class="bg-red-50 text-red-600 hover:bg-red-100 px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px] font-semibold">
+              <i data-lucide="play-circle" class="w-3 h-3"></i>
+              וידאו
+            </a>
+          ` : `
+            <span class="bg-red-50 text-red-600 px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px] font-semibold">
+              <i data-lucide="video" class="w-3 h-3"></i>
+              ${videoUrls.length} סרטונים
+            </span>
+          `}
         ` : ''}
         ${w.exercises && w.exercises.length > 0 ? `
           <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-[11px]">
@@ -367,8 +375,18 @@ function renderWorkoutCard(w, expanded = false) {
           </span>
         ` : ''}
         ${w.notes ? `
-          <span class="text-slate-400 text-[11px] truncate max-w-[180px]">📝 ${w.notes}</span>
+          <span class="text-slate-400 text-[11px] truncate max-w-[160px]">📝 ${w.notes}</span>
         ` : ''}
+
+        <!-- WhatsApp Share Button on Card -->
+        <button
+          type="button"
+          onclick="event.stopPropagation(); app.shareWorkoutWhatsApp('${w.id}')"
+          class="mr-auto bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md flex items-center gap-1 text-[11px] font-bold active:scale-95 transition"
+          title="שיתוף פרטי האימון לוואטסאפ">
+          <i data-lucide="share-2" class="w-3 h-3 text-emerald-600"></i>
+          <span>ווצאפ</span>
+        </button>
       </div>
     </div>
   `;
