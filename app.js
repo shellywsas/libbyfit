@@ -27,6 +27,18 @@ class LibiFitApp {
     this.recentTeammates = this.loadTeammates();
     this.isInstalled = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone;
     this.isWhatsApp = /WhatsApp/i.test(navigator.userAgent);
+
+    this.sessionId = 'sess-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+    this.authTab = 'login';
+    this.authError = '';
+    this.authLoading = false;
+  }
+
+  getUserName() {
+    if (window.firebaseService) {
+      return window.firebaseService.getUserName();
+    }
+    return localStorage.getItem('libi_username') || 'ליבי';
   }
 
   setTemplateFilter(sportId) {
@@ -49,7 +61,7 @@ class LibiFitApp {
     }
   }
 
-  saveState() {
+  saveStateLocally() {
     try {
       const wJson = JSON.stringify(this.workouts);
       const tJson = JSON.stringify(this.templates);
@@ -68,8 +80,14 @@ class LibiFitApp {
       localStorage.setItem('libby_recovery', rJson);
       localStorage.setItem('libby_prs', pJson);
     } catch (e) {
-      console.error('Error saving state:', e);
-      alert('שגיאה בשמירת הנתונים במכשיר!');
+      console.error('Error saving state locally:', e);
+    }
+  }
+
+  saveState() {
+    this.saveStateLocally();
+    if (window.firebaseService && window.firebaseService.isLoggedIn()) {
+      window.firebaseService.syncToCloud();
     }
   }
 
@@ -172,6 +190,9 @@ class LibiFitApp {
 
   init() {
     this.render();
+    if (window.firebaseService && window.firebaseService.currentUser) {
+      window.firebaseService.handleUserLogin(window.firebaseService.currentUser);
+    }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
     }
@@ -216,6 +237,9 @@ class LibiFitApp {
   }
 
   renderHeader() {
+    const userName = this.getUserName();
+    const isLoggedIn = window.firebaseService && window.firebaseService.isLoggedIn();
+
     return `
       <header class="bg-gradient-to-l from-brand-600 via-sky-500 to-cyan-500 text-white pt-4 pb-3 px-4 shadow-md sticky top-0 z-30">
         <div class="flex items-center justify-between">
@@ -225,10 +249,16 @@ class LibiFitApp {
               <img src="./app-logo.png" alt="LibiFit Logo" class="w-full h-full object-cover">
             </div>
             <div>
-              <h1 class="text-xl font-bold font-display tracking-tight flex items-center gap-1.5">
-                LibiFit
-                <span class="text-xs bg-white/25 px-2 py-0.5 rounded-full font-normal">ליבי ✨</span>
-              </h1>
+              <div class="flex items-center gap-1.5">
+                <h1 class="text-xl font-bold font-display tracking-tight">LibiFit</h1>
+                <button
+                  onclick="app.openModal('authModal')"
+                  class="text-xs bg-white/25 hover:bg-white/35 active:scale-95 transition px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 cursor-pointer border border-white/30"
+                  title="לחצי לשינוי שם או כניסה לחשבון בענן">
+                  <span>${userName} ✨</span>
+                  ${isLoggedIn ? '<span class="w-2 h-2 rounded-full bg-emerald-300 inline-block shadow-xs"></span>' : ''}
+                </button>
+              </div>
               <p class="text-[11px] text-brand-100 font-medium">כדורעף • כושר • טניס • טיפוס</p>
             </div>
           </div>
@@ -239,6 +269,12 @@ class LibiFitApp {
                 <span>התקנה</span>
               </button>
             ` : ''}
+            <button
+              onclick="app.openModal('authModal')"
+              class="p-2 rounded-xl ${isLoggedIn ? 'bg-emerald-500/80 hover:bg-emerald-600' : 'bg-white/15 hover:bg-white/25'} transition active:scale-95 flex items-center justify-center shadow-xs"
+              title="${isLoggedIn ? 'חשבון מחובר ומסונכרן לענן' : 'כניסה לחשבון / סנכרון ענן'}">
+              <i data-lucide="${isLoggedIn ? 'cloud' : 'user'}" class="w-5 h-5 text-white"></i>
+            </button>
             <button onclick="app.openModal('backupModal')" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 transition active:scale-95" title="גיבוי ושמירה">
               <i data-lucide="shield-check" class="w-5 h-5"></i>
             </button>
@@ -1294,6 +1330,144 @@ class LibiFitApp {
       });
     } else {
       alert('כדי להתקין: לחצי על 3 הנקודות ⋮ בפינת הדפדפן ובחרי "הוספה למסך הבית"');
+    }
+  }
+
+  setAuthTab(tab) {
+    this.authTab = tab;
+    this.authError = '';
+    this.render();
+  }
+
+  async signInGoogle() {
+    this.authLoading = true;
+    this.authError = '';
+    this.render();
+    try {
+      await window.firebaseService.signInWithGoogle();
+      this.authLoading = false;
+      this.closeModal();
+    } catch (e) {
+      console.error('Google sign-in error:', e);
+      this.authLoading = false;
+      this.authError = 'שגיאה בהתחברות עם Google: ' + (e.message || e);
+      this.render();
+    }
+  }
+
+  async loginEmail() {
+    const email = document.getElementById('auth-email')?.value;
+    const password = document.getElementById('auth-password')?.value;
+    if (!email || !password) {
+      this.authError = 'נא למלא כתובת אימייל וסיסמה';
+      this.render();
+      return;
+    }
+    this.authLoading = true;
+    this.authError = '';
+    this.render();
+    try {
+      await window.firebaseService.signInWithEmail(email, password);
+      this.authLoading = false;
+      this.closeModal();
+    } catch (e) {
+      console.error('Email login error:', e);
+      let msg = e.message;
+      if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        msg = 'כתובת אימייל או סיסמה שגויים';
+      } else if (e.code === 'auth/invalid-email') {
+        msg = 'כתובת אימייל לא תקינה';
+      }
+      this.authError = msg;
+      this.authLoading = false;
+      this.render();
+    }
+  }
+
+  async registerEmail() {
+    const name = document.getElementById('reg-name')?.value;
+    const email = document.getElementById('reg-email')?.value;
+    const password = document.getElementById('reg-password')?.value;
+    if (!name || !name.trim()) {
+      this.authError = 'נא למלא את שמך (למשל: ליבי, שירה, מאי)';
+      this.render();
+      return;
+    }
+    if (!email || !password) {
+      this.authError = 'נא למלא אימייל וסיסמה';
+      this.render();
+      return;
+    }
+    if (password.length < 6) {
+      this.authError = 'הסיסמה חייבת להכיל לפחות 6 תווים';
+      this.render();
+      return;
+    }
+    this.authLoading = true;
+    this.authError = '';
+    this.render();
+    try {
+      await window.firebaseService.signUpWithEmail(name, email, password);
+      this.authLoading = false;
+      this.closeModal();
+    } catch (e) {
+      console.error('Email registration error:', e);
+      let msg = e.message;
+      if (e.code === 'auth/email-already-in-use') {
+        msg = 'כתובת האימייל כבר קיימת. נסי להתחבר במקום!';
+      } else if (e.code === 'auth/weak-password') {
+        msg = 'הסיסמה חלשה מדי (נדרשים לפחות 6 תווים)';
+      }
+      this.authError = msg;
+      this.authLoading = false;
+      this.render();
+    }
+  }
+
+  async resetPasswordEmail() {
+    const email = document.getElementById('auth-email')?.value;
+    if (!email || !email.trim()) {
+      alert('נא להקליד את כתובת האימייל שלך בשדה האימייל למעלה, ואז ללחוץ שוב כדי לקבל קישור לאיפוס סיסמה.');
+      return;
+    }
+    try {
+      await firebase.auth().sendPasswordResetEmail(email.trim());
+      alert('קישור לאיפוס סיסמה נשלח אל: ' + email.trim());
+    } catch (e) {
+      alert('שגיאה בשליחת קישור איפוס: ' + (e.message || e));
+    }
+  }
+
+  async updateUserDisplayName() {
+    const input = document.getElementById('profile-display-name');
+    if (!input || !input.value.trim()) return;
+    const newName = input.value.trim();
+    await window.firebaseService.updateDisplayName(newName);
+    this.closeModal();
+    this.render();
+  }
+
+  updateLocalName() {
+    const input = document.getElementById('offline-name-input');
+    if (!input || !input.value.trim()) return;
+    const clean = input.value.trim();
+    localStorage.setItem('libi_username', clean);
+    this.closeModal();
+    this.render();
+  }
+
+  async manualCloudSync() {
+    if (window.firebaseService && window.firebaseService.isLoggedIn()) {
+      await window.firebaseService.syncToCloud();
+      alert('כל הנתונים סונכרנו בהצלחה לענן! ☁️✨');
+    }
+  }
+
+  async signOutFirebase() {
+    if (confirm('האם את בטוחה שברצונך להתנתק מהחשבון?')) {
+      await window.firebaseService.signOut();
+      this.closeModal();
+      this.render();
     }
   }
 }

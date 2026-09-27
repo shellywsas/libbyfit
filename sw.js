@@ -1,8 +1,9 @@
-const CACHE_NAME = 'libifit-v6';
+const CACHE_NAME = 'libifit-v7';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './firebase-service.js',
   './data.js',
   './calendar.js',
   './views.js',

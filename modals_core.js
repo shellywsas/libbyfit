@@ -12,6 +12,7 @@ function renderModalContainer() {
   if (app.activeModal === 'updatePRModal') content = renderUpdatePRModal();
   if (app.activeModal === 'backupModal') content = renderBackupModal();
   if (app.activeModal === 'installGuideModal') content = renderInstallGuideModal();
+  if (app.activeModal === 'authModal') content = renderAuthModal();
 
   return `
     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 overflow-y-auto">

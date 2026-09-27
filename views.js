@@ -186,7 +186,7 @@ function renderRecoveryTab() {
       <!-- Survey Card -->
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-5">
         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-          <h4 class="font-bold text-sm text-slate-800">סקר יומי לליבי (${app.formatHebrewDate(todayStr)})</h4>
+          <h4 class="font-bold text-sm text-slate-800">סקר יומי ל${app.getUserName()} (${app.formatHebrewDate(todayStr)})</h4>
           <span class="text-[11px] text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full font-bold">היום</span>
         </div>
 
@@ -398,7 +398,7 @@ function renderRecordsTab() {
       <div class="bg-gradient-to-r from-amber-500 to-yellow-400 text-white rounded-2xl p-4 shadow-md flex justify-between items-center">
         <div class="space-y-1">
           <h3 class="font-bold text-base flex items-center gap-1.5">
-            🏆 לוח שיאי העוצמה של ליבי
+            🏆 לוח שיאי העוצמה של ${app.getUserName()}
           </h3>
           <p class="text-xs text-amber-100">מעקב שיאים אישיים (PR) עם תאריכים והיסטוריה</p>
         </div>
