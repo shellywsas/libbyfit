@@ -749,18 +749,13 @@ class LibbyFitApp {
   previewScore(type, val) {
     const item = getScoreItem(val);
     const badge = document.getElementById(`${type}-preview-badge`);
-    const valEl = document.getElementById(`${type}-desc-val`);
     const textEl = document.getElementById(`${type}-desc-text`);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
     }
-    if (valEl) {
-      valEl.innerText = item.val;
-      valEl.style.backgroundColor = item.color;
-    }
     if (textEl) {
-      textEl.innerText = `תצוגה: ${item.label}`;
+      textEl.innerText = `${item.val}/10 - ${item.label}`;
     }
   }
 
@@ -770,36 +765,26 @@ class LibbyFitApp {
     if (!existing) return;
     const item = getScoreItem(existing[type]);
     const badge = document.getElementById(`${type}-preview-badge`);
-    const valEl = document.getElementById(`${type}-desc-val`);
     const textEl = document.getElementById(`${type}-desc-text`);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
     }
-    if (valEl) {
-      valEl.innerText = item.val;
-      valEl.style.backgroundColor = item.color;
-    }
     if (textEl) {
-      textEl.innerText = item.label;
+      textEl.innerText = `${item.val}/10 - ${item.label}`;
     }
   }
 
   previewStress(val) {
     const item = getStressItem(val);
     const badge = document.getElementById(`stress-preview-badge`);
-    const valEl = document.getElementById(`stress-desc-val`);
     const textEl = document.getElementById(`stress-desc-text`);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
     }
-    if (valEl) {
-      valEl.innerText = item.val;
-      valEl.style.backgroundColor = item.color;
-    }
     if (textEl) {
-      textEl.innerText = `תצוגה: ${item.label}`;
+      textEl.innerText = `${item.val}/10 - ${item.label}`;
     }
   }
 
@@ -809,18 +794,13 @@ class LibbyFitApp {
     if (!existing) return;
     const item = getStressItem(existing.stress || 3);
     const badge = document.getElementById(`stress-preview-badge`);
-    const valEl = document.getElementById(`stress-desc-val`);
     const textEl = document.getElementById(`stress-desc-text`);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
     }
-    if (valEl) {
-      valEl.innerText = item.val;
-      valEl.style.backgroundColor = item.color;
-    }
     if (textEl) {
-      textEl.innerText = item.label;
+      textEl.innerText = `${item.val}/10 - ${item.label}`;
     }
   }
 

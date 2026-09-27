@@ -143,25 +143,16 @@ function renderRecoveryTab() {
                   onmouseleave="app.resetPreviewScore('fatigue')"
                   onclick="app.setSurveyVal('fatigue', ${s.val})"
                   title="${s.val}: ${s.label}"
-                  class="py-2.5 rounded-xl font-black text-xs text-white transition-all transform active:scale-95 flex flex-col items-center justify-center relative shadow-sm ${isSelected ? 'ring-4 ring-offset-2 ring-slate-900 scale-110 z-20 opacity-100 shadow-md' : 'opacity-70 hover:opacity-100 hover:scale-105'}"
+                  class="py-2 rounded-xl font-bold text-xs text-white transition-all transform active:scale-95 flex flex-col items-center justify-center relative shadow-xs ${isSelected ? 'ring-2 ring-offset-2 ring-slate-800 scale-105 shadow-sm' : 'opacity-90 hover:opacity-100 hover:scale-105'}"
                   style="background-color: ${s.color};">
-                  <span class="text-sm font-black drop-shadow">${s.val}</span>
-                  ${isSelected ? `<span class="absolute -bottom-2 bg-slate-900 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full shadow border border-white leading-tight">✓</span>` : ''}
+                  <span>${s.val}</span>
+                  ${isSelected ? `<span class="w-1.5 h-1.5 bg-white rounded-full mt-1 shadow-sm"></span>` : `<span class="w-1.5 h-1.5 bg-transparent mt-1"></span>`}
                 </button>
               `;
             }).join('')}
           </div>
-          <div id="fatigue-desc" class="mt-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold shadow-xs">
-            <div class="flex items-center gap-2">
-              <span id="fatigue-desc-val" class="w-6 h-6 rounded-lg text-white font-black flex items-center justify-center shadow-xs text-xs" style="background-color: ${fatigueItem.color};">
-                ${fatigueItem.val}
-              </span>
-              <span id="fatigue-desc-text" class="text-slate-800">${fatigueItem.label}</span>
-            </div>
-            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-300">
-              <i data-lucide="check" class="w-3 h-3 text-emerald-600 stroke-[3]"></i>
-              <span>נבחר ✓</span>
-            </span>
+          <div id="fatigue-desc" class="text-xs font-medium text-slate-500 text-center py-1">
+            נבחר: <span id="fatigue-desc-text" class="font-bold text-slate-700">${fatigueItem.val}/10 - ${fatigueItem.label}</span>
           </div>
         </div>
 
@@ -187,25 +178,16 @@ function renderRecoveryTab() {
                   onmouseleave="app.resetPreviewScore('mood')"
                   onclick="app.setSurveyVal('mood', ${s.val})"
                   title="${s.val}: ${s.label}"
-                  class="py-2.5 rounded-xl font-black text-xs text-white transition-all transform active:scale-95 flex flex-col items-center justify-center relative shadow-sm ${isSelected ? 'ring-4 ring-offset-2 ring-slate-900 scale-110 z-20 opacity-100 shadow-md' : 'opacity-70 hover:opacity-100 hover:scale-105'}"
+                  class="py-2 rounded-xl font-bold text-xs text-white transition-all transform active:scale-95 flex flex-col items-center justify-center relative shadow-xs ${isSelected ? 'ring-2 ring-offset-2 ring-slate-800 scale-105 shadow-sm' : 'opacity-90 hover:opacity-100 hover:scale-105'}"
                   style="background-color: ${s.color};">
-                  <span class="text-sm font-black drop-shadow">${s.val}</span>
-                  ${isSelected ? `<span class="absolute -bottom-2 bg-slate-900 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full shadow border border-white leading-tight">✓</span>` : ''}
+                  <span>${s.val}</span>
+                  ${isSelected ? `<span class="w-1.5 h-1.5 bg-white rounded-full mt-1 shadow-sm"></span>` : `<span class="w-1.5 h-1.5 bg-transparent mt-1"></span>`}
                 </button>
               `;
             }).join('')}
           </div>
-          <div id="mood-desc" class="mt-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold shadow-xs">
-            <div class="flex items-center gap-2">
-              <span id="mood-desc-val" class="w-6 h-6 rounded-lg text-white font-black flex items-center justify-center shadow-xs text-xs" style="background-color: ${moodItem.color};">
-                ${moodItem.val}
-              </span>
-              <span id="mood-desc-text" class="text-slate-800">${moodItem.label}</span>
-            </div>
-            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-300">
-              <i data-lucide="check" class="w-3 h-3 text-emerald-600 stroke-[3]"></i>
-              <span>נבחר ✓</span>
-            </span>
+          <div id="mood-desc" class="text-xs font-medium text-slate-500 text-center py-1">
+            נבחר: <span id="mood-desc-text" class="font-bold text-slate-700">${moodItem.val}/10 - ${moodItem.label}</span>
           </div>
         </div>
 
@@ -231,25 +213,16 @@ function renderRecoveryTab() {
                   onmouseleave="app.resetPreviewStress()"
                   onclick="app.setSurveyVal('stress', ${s.val})"
                   title="${s.val}: ${s.label}"
-                  class="py-2.5 rounded-xl font-black text-xs text-white transition-all transform active:scale-95 flex flex-col items-center justify-center relative shadow-sm ${isSelected ? 'ring-4 ring-offset-2 ring-slate-900 scale-110 z-20 opacity-100 shadow-md' : 'opacity-70 hover:opacity-100 hover:scale-105'}"
+                  class="py-2 rounded-xl font-bold text-xs text-white transition-all transform active:scale-95 flex flex-col items-center justify-center relative shadow-xs ${isSelected ? 'ring-2 ring-offset-2 ring-slate-800 scale-105 shadow-sm' : 'opacity-90 hover:opacity-100 hover:scale-105'}"
                   style="background-color: ${s.color};">
-                  <span class="text-sm font-black drop-shadow">${s.val}</span>
-                  ${isSelected ? `<span class="absolute -bottom-2 bg-slate-900 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full shadow border border-white leading-tight">✓</span>` : ''}
+                  <span>${s.val}</span>
+                  ${isSelected ? `<span class="w-1.5 h-1.5 bg-white rounded-full mt-1 shadow-sm"></span>` : `<span class="w-1.5 h-1.5 bg-transparent mt-1"></span>`}
                 </button>
               `;
             }).join('')}
           </div>
-          <div id="stress-desc" class="mt-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold shadow-xs">
-            <div class="flex items-center gap-2">
-              <span id="stress-desc-val" class="w-6 h-6 rounded-lg text-white font-black flex items-center justify-center shadow-xs text-xs" style="background-color: ${stressItem.color};">
-                ${stressItem.val}
-              </span>
-              <span id="stress-desc-text" class="text-slate-800">${stressItem.label}</span>
-            </div>
-            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-300">
-              <i data-lucide="check" class="w-3 h-3 text-emerald-600 stroke-[3]"></i>
-              <span>נבחר ✓</span>
-            </span>
+          <div id="stress-desc" class="text-xs font-medium text-slate-500 text-center py-1">
+            נבחר: <span id="stress-desc-text" class="font-bold text-slate-700">${stressItem.val}/10 - ${stressItem.label}</span>
           </div>
         </div>
 
