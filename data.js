@@ -145,6 +145,14 @@ const SPORT_CONFIGS = {
     lightBg: '#FDF2F8',
     accentColor: '#EC4899'
   },
+  planned: {
+    id: 'planned',
+    name: 'מתוכנן',
+    emoji: '⏳',
+    badgeClass: 'bg-amber-500 text-white',
+    lightBg: '#FFFBEB',
+    accentColor: '#F59E0B'
+  },
   other: {
     id: 'other',
     name: 'ספורט אחר',
@@ -155,7 +163,7 @@ const SPORT_CONFIGS = {
   }
 };
 
-// 10 Distinct Vibrant Color Palette for Survey 1-10
+// 10 Distinct Vibrant Color Palette for Energy / Mood
 const SCORE_SCALE = [
   { val: 1, color: '#DC2626', bgClass: 'bg-red-600', textClass: 'text-red-700', label: 'מותשת / ירוד מאוד' },
   { val: 2, color: '#EF4444', bgClass: 'bg-red-500', textClass: 'text-red-600', label: 'עייפות כבדה / מצב רוח נמוך' },
@@ -169,7 +177,54 @@ const SCORE_SCALE = [
   { val: 10, color: '#0284C7', bgClass: 'bg-sky-600', textClass: 'text-sky-700', label: 'בעננים, עוצמה מקסימלית! 🚀' }
 ];
 
+// 10 Distinct Vibrant Color Palette for Stress (1 = calm, 10 = max stress)
+const STRESS_SCALE = [
+  { val: 1, color: '#0EA5E9', label: 'רוגע ושלווה מוחלטת 🧘‍♀️' },
+  { val: 2, color: '#06B6D4', label: 'רגועה מאוד ושקטה' },
+  { val: 3, color: '#14B8A6', label: 'נינוחה ורגועה' },
+  { val: 4, color: '#22C55E', label: 'הכל תחת שליטה' },
+  { val: 5, color: '#84CC16', label: 'עומס קל / נורמלי' },
+  { val: 6, color: '#EAB308', label: 'קצת לחץ מורגש' },
+  { val: 7, color: '#F97316', label: 'לחץ מורגש למדי' },
+  { val: 8, color: '#EA580C', label: 'סטרס גבוה' },
+  { val: 9, color: '#EF4444', label: 'סטרס כבד ועומס' },
+  { val: 10, color: '#DC2626', label: 'סטרס ולחץ שיא! 🤯' }
+];
+
 function getScoreItem(val) {
   const num = parseInt(val) || 5;
   return SCORE_SCALE.find(s => s.val === num) || SCORE_SCALE[4];
+}
+
+function getStressItem(val) {
+  const num = parseInt(val) || 3;
+  return STRESS_SCALE.find(s => s.val === num) || STRESS_SCALE[2];
+}
+
+// Format time range & duration
+function formatWorkoutTime(startTime, endTime) {
+  if (!startTime) return '';
+  if (!endTime) return startTime;
+
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  let totalMin = (eh * 60 + em) - (sh * 60 + sm);
+  if (totalMin < 0) totalMin += 24 * 60; // if cross midnight
+
+  let durationText = '';
+  if (totalMin === 60) {
+    durationText = 'שעה';
+  } else if (totalMin === 90) {
+    durationText = 'שעה וחצי';
+  } else if (totalMin === 120) {
+    durationText = 'שעתיים';
+  } else if (totalMin > 60) {
+    const hours = Math.floor(totalMin / 60);
+    const mins = totalMin % 60;
+    durationText = `${hours} ש' ${mins > 0 ? mins + " דק'" : ''}`;
+  } else if (totalMin > 0) {
+    durationText = `${totalMin} דק'`;
+  }
+
+  return `${startTime} - ${endTime} ${durationText ? `(${durationText})` : ''}`;
 }

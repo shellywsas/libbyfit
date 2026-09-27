@@ -71,24 +71,27 @@ function renderGymTab() {
   `;
 }
 
-// --- TAB 3: DAILY VIBE, RECOVERY & PERIOD TRACKER ---
+// --- TAB 3: DAILY VIBE, RECOVERY, STRESS & PERIOD TRACKER ---
 function renderRecoveryTab() {
   const todayStr = app.formatDate(new Date());
   if (!app.recoveryLogs[todayStr]) {
     app.recoveryLogs[todayStr] = {
       fatigue: 7,
       mood: 8,
+      stress: 3,
       notes: '',
       period: { isPeriod: false, flow: 'medium', symptoms: [] }
     };
   }
   const existing = app.recoveryLogs[todayStr];
+  if (existing.stress === undefined) existing.stress = 3;
   if (!existing.period) {
     existing.period = { isPeriod: false, flow: 'medium', symptoms: [] };
   }
 
   const fatigueItem = getScoreItem(existing.fatigue);
   const moodItem = getScoreItem(existing.mood);
+  const stressItem = getStressItem(existing.stress);
 
   // Period stats
   const cycleInfo = app.getCycleInsights();
@@ -99,9 +102,9 @@ function renderRecoveryTab() {
       <div class="bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-white rounded-2xl p-4 shadow-md flex justify-between items-center">
         <div>
           <h3 class="font-bold text-base flex items-center gap-1.5">
-            🧘‍♀️ התאוששות, מצב רוח ומחזור
+            🧘‍♀️ התאוששות, מצב רוח, לחץ ומחזור
           </h3>
-          <p class="text-xs text-teal-100 mt-0.5">מעקב יומי של רמת אנרגיה, מצב רוח וווסת</p>
+          <p class="text-xs text-teal-100 mt-0.5">מעקב יומי של רמת אנרגיה, עומס נפשי וווסת</p>
         </div>
         ${existing.period.isPeriod ? `
           <div class="bg-rose-500/40 border border-white/40 text-white px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs">
@@ -130,7 +133,6 @@ function renderRecoveryTab() {
           </div>
           <p class="text-[11px] text-slate-400">1 = מותשת לגמרי, אפס כוח | 10 = שיא האנרגיה והעירנות!</p>
 
-          <!-- 10 ALWAYS-COLORED VIBRANT BUTTONS -->
           <div class="grid grid-cols-10 gap-1.5 pt-1">
             ${SCORE_SCALE.map(s => {
               const isSelected = existing.fatigue === s.val;
@@ -149,7 +151,6 @@ function renderRecoveryTab() {
               `;
             }).join('')}
           </div>
-          <!-- Real-time description label -->
           <div id="fatigue-desc" class="text-[11px] font-semibold text-slate-500 text-center py-0.5">
             נבחר: ${fatigueItem.val}/10 - ${fatigueItem.label}
           </div>
@@ -167,7 +168,6 @@ function renderRecoveryTab() {
           </div>
           <p class="text-[11px] text-slate-400">1 = ירוד ומבאס | 10 = בעננים, שמחה ומלאת מוטיבציה!</p>
 
-          <!-- 10 ALWAYS-COLORED VIBRANT BUTTONS -->
           <div class="grid grid-cols-10 gap-1.5 pt-1">
             ${SCORE_SCALE.map(s => {
               const isSelected = existing.mood === s.val;
@@ -191,7 +191,42 @@ function renderRecoveryTab() {
           </div>
         </div>
 
-        <!-- SECTION 3: PERIOD / MENSTRUAL CYCLE TRACKING -->
+        <!-- SURVEY 3: STRESS LEVEL (1-10) -->
+        <div class="space-y-2 pt-3 border-t border-slate-100">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <span>⚡ רמת לחץ וסטרס:</span>
+            </label>
+            <div id="stress-preview-badge" class="text-xs font-extrabold px-3 py-1 rounded-xl text-white shadow-xs transition-all" style="background-color: ${stressItem.color};">
+              ${stressItem.val} • ${stressItem.label}
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">1 = רוגע מוחלט, שלווה ושקט | 10 = סטרס ועומס קיצוני</p>
+
+          <div class="grid grid-cols-10 gap-1.5 pt-1">
+            ${STRESS_SCALE.map(s => {
+              const isSelected = existing.stress === s.val;
+              return `
+                <button
+                  type="button"
+                  onmouseenter="app.previewStress(${s.val})"
+                  onmouseleave="app.resetPreviewStress()"
+                  onclick="app.setSurveyVal('stress', ${s.val})"
+                  title="${s.val}: ${s.label}"
+                  class="py-2.5 rounded-xl font-black text-xs text-white transition-all transform active:scale-90 flex flex-col items-center justify-center relative shadow-xs ${isSelected ? 'ring-3 ring-slate-900 scale-110 z-10' : 'opacity-90 hover:opacity-100 hover:scale-105'}"
+                  style="background-color: ${s.color};">
+                  <span>${s.val}</span>
+                  ${isSelected ? `<span class="w-1 h-1 bg-white rounded-full mt-0.5"></span>` : ''}
+                </button>
+              `;
+            }).join('')}
+          </div>
+          <div id="stress-desc" class="text-[11px] font-semibold text-slate-500 text-center py-0.5">
+            נבחר: ${stressItem.val}/10 - ${stressItem.label}
+          </div>
+        </div>
+
+        <!-- SECTION 4: PERIOD / MENSTRUAL CYCLE TRACKING -->
         <div class="space-y-3 pt-3 border-t border-slate-100 bg-rose-50/50 p-3.5 rounded-2xl border border-rose-100">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -201,7 +236,6 @@ function renderRecoveryTab() {
                 <p class="text-[10px] text-rose-600">${cycleInfo}</p>
               </div>
             </div>
-            <!-- Main Toggle Button -->
             <button
               type="button"
               onclick="app.togglePeriod()"
@@ -211,7 +245,6 @@ function renderRecoveryTab() {
           </div>
 
           ${existing.period.isPeriod ? `
-            <!-- Flow selector -->
             <div class="space-y-1.5 pt-1">
               <span class="text-[11px] font-bold text-rose-800 block">עוצמת דימום:</span>
               <div class="grid grid-cols-3 gap-1.5 text-xs font-bold">
@@ -227,7 +260,6 @@ function renderRecoveryTab() {
               </div>
             </div>
 
-            <!-- Symptoms chips -->
             <div class="space-y-1.5 pt-1">
               <span class="text-[11px] font-bold text-rose-800 block">תחושות ותופעות:</span>
               <div class="flex flex-wrap gap-1.5">
@@ -252,7 +284,7 @@ function renderRecoveryTab() {
 
         <button onclick="app.saveTodayRecovery()" class="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold py-2.5 rounded-xl text-xs shadow hover:opacity-95 transition active:scale-95 flex items-center justify-center gap-1.5">
           <i data-lucide="check" class="w-4 h-4"></i>
-          שמרי מדד התאוששות ומחזור להיום
+          שמרי מדד התאוששות, לחץ ומחזור להיום
         </button>
       </div>
 
@@ -264,6 +296,7 @@ function renderRecoveryTab() {
             const log = app.recoveryLogs[dStr];
             const fItem = getScoreItem(log.fatigue);
             const mItem = getScoreItem(log.mood);
+            const sItem = log.stress ? getStressItem(log.stress) : null;
             const isPer = log.period && log.period.isPeriod;
 
             return `
@@ -273,11 +306,12 @@ function renderRecoveryTab() {
                     <span class="font-bold text-slate-700">${app.formatHebrewDate(dStr)}</span>
                     ${isPer ? `<span class="bg-rose-100 text-rose-700 font-bold px-1.5 py-0.2 rounded-md text-[10px]">🩸 ווסת</span>` : ''}
                   </div>
-                  ${log.notes ? `<p class="text-slate-400 text-[11px] mt-0.5 truncate max-w-[200px]">"${log.notes}"</p>` : ''}
+                  ${log.notes ? `<p class="text-slate-400 text-[11px] mt-0.5 truncate max-w-[190px]">"${log.notes}"</p>` : ''}
                 </div>
-                <div class="flex items-center gap-1.5 font-bold">
-                  <span class="px-2 py-0.5 rounded-md text-white shadow-xs" style="background-color: ${fItem.color};">🔋 ${log.fatigue}</span>
-                  <span class="px-2 py-0.5 rounded-md text-white shadow-xs" style="background-color: ${mItem.color};">😊 ${log.mood}</span>
+                <div class="flex items-center gap-1 font-bold">
+                  <span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${fItem.color};">🔋${log.fatigue}</span>
+                  <span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${mItem.color};">😊${log.mood}</span>
+                  ${sItem ? `<span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${sItem.color};">⚡${log.stress}</span>` : ''}
                 </div>
               </div>
             `;

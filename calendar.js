@@ -79,6 +79,7 @@ function renderWeeklyCalendar() {
         const rec = d.recovery;
         const fatigueItem = rec ? getScoreItem(rec.fatigue) : null;
         const moodItem = rec ? getScoreItem(rec.mood) : null;
+        const stressItem = rec && rec.stress ? getStressItem(rec.stress) : null;
         const isPeriod = rec && rec.period && rec.period.isPeriod;
 
         return `
@@ -93,19 +94,24 @@ function renderWeeklyCalendar() {
                 </span>
                 ${isPeriod ? `
                   <span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5" title="מחזור / ווסת">
-                    🩸 ${rec.period.flow === 'heavy' ? 'ווסת (כבד)' : rec.period.flow === 'light' ? 'ווסת (קל)' : 'ווסת'}
+                    🩸 ווסת
                   </span>
                 ` : ''}
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5">
                 ${rec ? `
-                  <div class="flex items-center gap-1.5 text-[11px] font-bold">
-                    <span class="px-2 py-0.5 rounded-md text-white shadow-xs" style="background-color: ${fatigueItem.color};" title="אנרגיה: ${rec.fatigue}/10">
-                      🔋 ${rec.fatigue}
+                  <div class="flex items-center gap-1 text-[10px] font-bold">
+                    <span class="px-1.5 py-0.5 rounded text-white" style="background-color: ${fatigueItem.color};" title="אנרגיה: ${rec.fatigue}">
+                      🔋${rec.fatigue}
                     </span>
-                    <span class="px-2 py-0.5 rounded-md text-white shadow-xs" style="background-color: ${moodItem.color};" title="מצב רוח: ${rec.mood}/10">
-                      😊 ${rec.mood}
+                    <span class="px-1.5 py-0.5 rounded text-white" style="background-color: ${moodItem.color};" title="מצב רוח: ${rec.mood}">
+                      😊${rec.mood}
                     </span>
+                    ${stressItem ? `
+                      <span class="px-1.5 py-0.5 rounded text-white" style="background-color: ${stressItem.color};" title="רמת לחץ: ${rec.stress}">
+                        ⚡${rec.stress}
+                      </span>
+                    ` : ''}
                   </div>
                 ` : ''}
                 <button onclick="app.openNewWorkoutModal('${d.dateStr}')" class="text-xs text-brand-600 hover:text-brand-800 font-semibold p-1 hover:bg-brand-50 rounded-lg flex items-center gap-0.5">
@@ -154,11 +160,11 @@ function renderMonthlyCalendar() {
 
     const fatigueItem = recovery ? getScoreItem(recovery.fatigue) : null;
     const moodItem = recovery ? getScoreItem(recovery.mood) : null;
+    const stressItem = recovery && recovery.stress ? getStressItem(recovery.stress) : null;
     const isPeriod = recovery && recovery.period && recovery.period.isPeriod;
 
     cellsHtml += `
       <div onclick="app.selectDateAndGoDaily('${dStr}')" class="h-20 bg-white border ${isToday ? 'border-brand-500 ring-2 ring-brand-300' : 'border-slate-100'} rounded-xl p-1 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition shadow-xs relative overflow-hidden">
-        <!-- Top row: Day number and Period icon -->
         <div class="flex justify-between items-center">
           <span class="text-[11px] font-bold ${isToday ? 'w-5 h-5 rounded-full bg-brand-500 text-white flex items-center justify-center text-[10px]' : 'text-slate-700'}">
             ${day}
@@ -166,23 +172,29 @@ function renderMonthlyCalendar() {
           ${isPeriod ? `<span class="text-[10px]" title="יום מחזור">🩸</span>` : ''}
         </div>
 
-        <!-- Middle: Fatigue & Mood colorful mini-tags -->
         ${recovery ? `
-          <div class="flex items-center justify-center gap-1 my-0.5">
-            <span class="text-[9px] font-extrabold text-white px-1 py-0.2 rounded" style="background-color: ${fatigueItem.color};" title="אנרגיה: ${recovery.fatigue}">
+          <div class="flex items-center justify-center gap-0.5 my-0.5">
+            <span class="text-[8px] font-black text-white px-1 py-0.2 rounded" style="background-color: ${fatigueItem.color};" title="אנרגיה: ${recovery.fatigue}">
               🔋${recovery.fatigue}
             </span>
-            <span class="text-[9px] font-extrabold text-white px-1 py-0.2 rounded" style="background-color: ${moodItem.color};" title="מצב רוח: ${recovery.mood}">
+            <span class="text-[8px] font-black text-white px-1 py-0.2 rounded" style="background-color: ${moodItem.color};" title="מצב רוח: ${recovery.mood}">
               😊${recovery.mood}
             </span>
+            ${stressItem ? `
+              <span class="text-[8px] font-black text-white px-1 py-0.2 rounded" style="background-color: ${stressItem.color};" title="לחץ: ${recovery.stress}">
+                ⚡${recovery.stress}
+              </span>
+            ` : ''}
           </div>
         ` : `
           <div class="h-3.5"></div>
         `}
 
-        <!-- Bottom row: Workouts colored chips/dots -->
         <div class="flex flex-wrap gap-1 items-center justify-center overflow-hidden">
           ${dayWorkouts.map(w => {
+            if (w.isPlanned) {
+              return `<span class="w-2.5 h-2.5 rounded-full border border-amber-500 bg-amber-100" title="מתוכנן: ${w.title}"></span>`;
+            }
             const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
             return `<span class="w-2 h-2 rounded-full" style="background-color: ${cfg.accentColor};" title="${cfg.name}"></span>`;
           }).join('')}
@@ -193,13 +205,14 @@ function renderMonthlyCalendar() {
 
   return `
     <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm space-y-2">
-      <!-- Legend for month view -->
       <div class="flex items-center justify-between text-[11px] text-slate-500 pb-1 border-b border-slate-100">
         <span class="font-bold text-slate-700">תצוגה חודשית מורחבת</span>
         <div class="flex items-center gap-2 text-[10px]">
-          <span class="flex items-center gap-0.5">🔋 עייפות</span>
-          <span class="flex items-center gap-0.5">😊 מצב רוח</span>
-          <span class="flex items-center gap-0.5">🩸 ווסת</span>
+          <span title="אנרגיה">🔋</span>
+          <span title="מצב רוח">😊</span>
+          <span title="לחץ">⚡</span>
+          <span title="ווסת">🩸</span>
+          <span title="אימון מתוכנן">⏳ מתוכנן</span>
         </div>
       </div>
       <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-400 pb-1">
@@ -219,6 +232,7 @@ function renderDailyCalendar() {
 
   const fatigueItem = recovery ? getScoreItem(recovery.fatigue) : null;
   const moodItem = recovery ? getScoreItem(recovery.mood) : null;
+  const stressItem = recovery && recovery.stress ? getStressItem(recovery.stress) : null;
   const isPeriod = recovery && recovery.period && recovery.period.isPeriod;
 
   return `
@@ -229,18 +243,23 @@ function renderDailyCalendar() {
             <h4 class="text-xs font-bold text-slate-500">התאוששות ומצב רוח:</h4>
             ${isPeriod ? `
               <span class="bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-full text-[10px] flex items-center gap-0.5">
-                🩸 יום ווסת (${recovery.period.flow === 'heavy' ? 'כבד' : recovery.period.flow === 'light' ? 'קל' : 'בינוני'})
+                🩸 יום ווסת
               </span>
             ` : ''}
           </div>
           ${recovery ? `
-            <div class="flex items-center gap-2 text-xs font-bold mt-1">
-              <span class="px-2.5 py-1 rounded-lg text-white font-extrabold shadow-xs" style="background-color: ${fatigueItem.color};">
+            <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold mt-1">
+              <span class="px-2 py-0.5 rounded-lg text-white font-extrabold shadow-xs" style="background-color: ${fatigueItem.color};">
                 🔋 אנרגיה: ${recovery.fatigue}/10
               </span>
-              <span class="px-2.5 py-1 rounded-lg text-white font-extrabold shadow-xs" style="background-color: ${moodItem.color};">
+              <span class="px-2 py-0.5 rounded-lg text-white font-extrabold shadow-xs" style="background-color: ${moodItem.color};">
                 😊 מצב רוח: ${recovery.mood}/10
               </span>
+              ${stressItem ? `
+                <span class="px-2 py-0.5 rounded-lg text-white font-extrabold shadow-xs" style="background-color: ${stressItem.color};">
+                  ⚡ לחץ: ${recovery.stress}/10
+                </span>
+              ` : ''}
             </div>
             ${recovery.notes ? `<p class="text-xs text-slate-600 mt-1 italic font-light">"${recovery.notes}"</p>` : ''}
           ` : `
@@ -254,7 +273,7 @@ function renderDailyCalendar() {
 
       <div class="space-y-2">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold text-slate-700">אימונים שבוצעו (${dayWorkouts.length})</h3>
+          <h3 class="text-sm font-bold text-slate-700">אימונים ליום זה (${dayWorkouts.length})</h3>
           <button onclick="app.openNewWorkoutModal('${dStr}')" class="text-xs text-brand-600 font-bold hover:underline flex items-center gap-1">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             הוסיפי אימון
@@ -278,7 +297,41 @@ function renderDailyCalendar() {
 }
 
 function renderWorkoutCard(w, expanded = false) {
+  // If it's a planned/future workout
+  if (w.isPlanned) {
+    const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
+    return `
+      <div class="bg-amber-50/70 rounded-xl border-2 border-dashed border-amber-300 p-3 shadow-xs flex items-center justify-between gap-2 hover:bg-amber-100/50 transition">
+        <div class="flex items-center gap-2.5 flex-1 cursor-pointer" onclick="app.openWorkoutDetail('${w.id}')">
+          <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+            ⏳
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-xs text-slate-800">${w.title || 'אימון מתוכנן'}</span>
+              <span class="text-[10px] bg-amber-200 text-amber-900 font-bold px-1.5 py-0.2 rounded-md">מתוכנן</span>
+            </div>
+            ${timeDisplay ? `<span class="text-[11px] text-amber-800 font-medium block">⏰ ${timeDisplay}</span>` : ''}
+            ${w.notes ? `<span class="text-[10px] text-slate-500 italic block truncate max-w-[170px]">${w.notes}</span>` : ''}
+          </div>
+        </div>
+
+        <!-- Big checkmark button to complete and fill in workout -->
+        <button
+          onclick="event.stopPropagation(); app.completePlannedWorkout('${w.id}')"
+          class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm active:scale-95 transition"
+          title="לחצי כשסיימת את האימון כדי לעדכן מה עשית!">
+          <span>סמני כבוצע</span>
+          <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
+        </button>
+      </div>
+    `;
+  }
+
+  // Regular completed workout
   const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
+  const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
+
   return `
     <div onclick="app.openWorkoutDetail('${w.id}')" class="cursor-pointer bg-white rounded-xl border border-slate-100 hover:border-slate-200 p-2.5 shadow-sm transition hover:shadow flex flex-col gap-1.5 relative overflow-hidden">
       <div class="absolute right-0 top-0 bottom-0 w-1.5" style="background-color: ${cfg.accentColor};"></div>
@@ -290,7 +343,7 @@ function renderWorkoutCard(w, expanded = false) {
           </span>
           <span class="font-bold text-xs text-slate-800">${w.title || cfg.name}</span>
         </div>
-        ${w.duration ? `<span class="text-[11px] text-slate-400 font-medium">${w.duration} דק'</span>` : ''}
+        ${timeDisplay ? `<span class="text-[11px] text-slate-500 font-semibold">⏰ ${timeDisplay}</span>` : (w.duration ? `<span class="text-[11px] text-slate-400 font-medium">${w.duration} דק'</span>` : '')}
       </div>
 
       <div class="text-xs text-slate-500 pr-2 flex flex-wrap gap-2 items-center">

@@ -18,6 +18,7 @@ class LibbyFitApp {
 
     this.activeModal = null;
     this.editingWorkout = null;
+    this.completingWorkout = null;
     this.detailWorkout = null;
     this.editingTemplate = null;
     this.editingPR = null;
@@ -176,15 +177,16 @@ class LibbyFitApp {
       <header class="bg-gradient-to-l from-brand-600 via-sky-500 to-cyan-500 text-white pt-4 pb-3 px-4 shadow-md sticky top-0 z-30">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2 space-x-reverse">
-            <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner">
-              <span class="text-2xl">🏐</span>
+            <!-- Custom Multi-Sport Logo Badge (Dumbbell, Volleyball, Tennis, Climbing) -->
+            <div class="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner p-1">
+              <img src="./favicon.png" alt="LibbyFit Logo" class="w-full h-full object-contain drop-shadow">
             </div>
             <div>
               <h1 class="text-xl font-bold font-display tracking-tight flex items-center gap-1.5">
                 LibbyFit
                 <span class="text-xs bg-white/25 px-2 py-0.5 rounded-full font-normal">ליבי ✨</span>
               </h1>
-              <p class="text-xs text-brand-100 font-medium">כדורעף • כושר • התאוששות</p>
+              <p class="text-[11px] text-brand-100 font-medium">כדורעף • כושר • טניס • טיפוס</p>
             </div>
           </div>
           <div class="flex items-center gap-1.5">
@@ -303,15 +305,22 @@ class LibbyFitApp {
     this.editingWorkout = {
       id: 'w-' + Date.now(),
       date: dateStr || this.formatDate(new Date()),
+      startTime: '18:00',
+      endTime: '19:30',
       type: 'volleyball',
       title: '',
-      duration: 60,
       notes: '',
       partner: '',
       videoUrl: '',
+      isPlanned: false,
       exercises: []
     };
     this.openModal('workoutForm');
+  }
+
+  toggleWorkoutPlanned(checked) {
+    this.editingWorkout.isPlanned = checked;
+    this.render();
   }
 
   changeWorkoutType(typeId) {
@@ -417,11 +426,12 @@ class LibbyFitApp {
   saveWorkoutFromForm() {
     const w = this.editingWorkout;
     w.date = document.getElementById('w-date').value || w.date;
-    w.duration = parseInt(document.getElementById('w-duration').value) || 60;
-    w.title = document.getElementById('w-title').value.trim() || SPORT_CONFIGS[w.type]?.name || 'אימון';
+    w.startTime = document.getElementById('w-start-time')?.value || '18:00';
+    w.endTime = document.getElementById('w-end-time')?.value || '19:30';
+    w.title = document.getElementById('w-title').value.trim() || (w.isPlanned ? 'אימון מתוכנן' : SPORT_CONFIGS[w.type]?.name || 'אימון');
     w.notes = document.getElementById('w-notes')?.value.trim() || '';
 
-    if (w.type === 'volleyball') {
+    if (!w.isPlanned && w.type === 'volleyball') {
       const partnerVal = document.getElementById('w-partner')?.value.trim() || '';
       w.partner = partnerVal;
       w.videoUrl = document.getElementById('w-video')?.value.trim() || '';
@@ -443,6 +453,123 @@ class LibbyFitApp {
     if (window.confetti) {
       window.confetti({ particleCount: 35, spread: 60 });
     }
+  }
+
+  // Completing a planned workout flow
+  completePlannedWorkout(id) {
+    const target = this.workouts.find(w => w.id === id);
+    if (!target) return;
+
+    this.completingWorkout = {
+      ...target,
+      type: target.type === 'planned' ? 'volleyball' : (target.type || 'volleyball'),
+      exercises: target.exercises || [],
+      partner: target.partner || '',
+      videoUrl: target.videoUrl || ''
+    };
+    this.openModal('completePlanned');
+  }
+
+  changeCompletingWorkoutType(typeId) {
+    this.completingWorkout.type = typeId;
+    if (typeId === 'gym' && (!this.completingWorkout.exercises || this.completingWorkout.exercises.length === 0)) {
+      this.completingWorkout.exercises = [
+        { name: 'סקוואט עם מוט', isBodyweight: false, sets: [{ setNum: 1, weight: 40, reps: 8 }, { setNum: 2, weight: 40, reps: 8 }] }
+      ];
+    }
+    this.render();
+  }
+
+  loadTemplateIntoCompleting(tmplId) {
+    if (!tmplId) return;
+    const tmpl = this.templates.find(t => t.id === tmplId);
+    if (!tmpl) return;
+
+    this.completingWorkout.title = tmpl.name;
+    this.completingWorkout.exercises = tmpl.exercises.map(ex => {
+      const sets = [];
+      const count = ex.defaultSets || 3;
+      for (let s = 1; s <= count; s++) {
+        sets.push({
+          setNum: s,
+          weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
+          reps: ex.defaultReps || 10
+        });
+      }
+      return {
+        name: ex.name,
+        isBodyweight: !!ex.isBodyweight,
+        sets: sets
+      };
+    });
+    this.render();
+  }
+
+  addExerciseToCompleting() {
+    this.completingWorkout.exercises.push({
+      name: '',
+      isBodyweight: false,
+      sets: [
+        { setNum: 1, weight: '', reps: 10 },
+        { setNum: 2, weight: '', reps: 10 }
+      ]
+    });
+    this.render();
+  }
+
+  removeExerciseFromCompleting(idx) {
+    this.completingWorkout.exercises.splice(idx, 1);
+    this.render();
+  }
+
+  toggleCompletingExBodyweight(idx, checked) {
+    this.completingWorkout.exercises[idx].isBodyweight = checked;
+    this.render();
+  }
+
+  updateCompletingExName(idx, val) {
+    this.completingWorkout.exercises[idx].name = val;
+  }
+
+  updateCompletingSetWeight(exIdx, sIdx, val) {
+    this.completingWorkout.exercises[exIdx].sets[sIdx].weight = val;
+  }
+
+  updateCompletingSetReps(exIdx, sIdx, val) {
+    this.completingWorkout.exercises[exIdx].sets[sIdx].reps = val;
+  }
+
+  saveCompletedPlannedWorkout() {
+    const cw = this.completingWorkout;
+    cw.startTime = document.getElementById('c-start-time')?.value || cw.startTime;
+    cw.endTime = document.getElementById('c-end-time')?.value || cw.endTime;
+    cw.title = document.getElementById('c-title')?.value.trim() || SPORT_CONFIGS[cw.type]?.name || 'אימון';
+    cw.notes = document.getElementById('c-notes')?.value.trim() || '';
+
+    if (cw.type === 'volleyball') {
+      const partnerVal = document.getElementById('c-partner')?.value.trim() || '';
+      cw.partner = partnerVal;
+      cw.videoUrl = document.getElementById('c-video')?.value.trim() || '';
+      if (partnerVal) {
+        partnerVal.split(',').forEach(p => this.saveTeammate(p.trim()));
+      }
+    }
+
+    // Mark as NO LONGER planned!
+    cw.isPlanned = false;
+
+    const idx = this.workouts.findIndex(w => w.id === cw.id);
+    if (idx >= 0) {
+      this.workouts[idx] = cw;
+    }
+
+    this.saveState();
+    this.closeModal();
+
+    if (window.confetti) {
+      window.confetti({ particleCount: 60, spread: 80, origin: { y: 0.7 } });
+    }
+    alert('איזה אלופה! האימון סומן כהושלם בהצלחה 🎉');
   }
 
   openWorkoutDetail(id) {
@@ -480,12 +607,14 @@ class LibbyFitApp {
     const newWorkout = {
       id: 'w-' + Date.now(),
       date: this.formatDate(new Date()),
+      startTime: '18:00',
+      endTime: '19:30',
       type: 'gym',
       title: tmpl.name,
-      duration: 60,
       notes: '',
       partner: '',
       videoUrl: '',
+      isPlanned: false,
       exercises: tmpl.exercises.map(ex => {
         const sets = [];
         const count = ex.defaultSets || 3;
@@ -561,7 +690,7 @@ class LibbyFitApp {
     this.render();
   }
 
-  // --- RECOVERY, SURVEY PREVIEWS & PERIOD TRACKING ---
+  // --- RECOVERY, PREVIEWS & PERIOD ---
   previewScore(type, val) {
     const item = getScoreItem(val);
     const badge = document.getElementById(`${type}-preview-badge`);
@@ -591,12 +720,42 @@ class LibbyFitApp {
     }
   }
 
+  previewStress(val) {
+    const item = getStressItem(val);
+    const badge = document.getElementById(`stress-preview-badge`);
+    const desc = document.getElementById(`stress-desc`);
+    if (badge) {
+      badge.style.backgroundColor = item.color;
+      badge.innerText = `${item.val} • ${item.label}`;
+    }
+    if (desc) {
+      desc.innerText = `תצוגה: ${item.val}/10 - ${item.label}`;
+    }
+  }
+
+  resetPreviewStress() {
+    const todayStr = this.formatDate(new Date());
+    const existing = this.recoveryLogs[todayStr];
+    if (!existing) return;
+    const item = getStressItem(existing.stress || 3);
+    const badge = document.getElementById(`stress-preview-badge`);
+    const desc = document.getElementById(`stress-desc`);
+    if (badge) {
+      badge.style.backgroundColor = item.color;
+      badge.innerText = `${item.val} • ${item.label}`;
+    }
+    if (desc) {
+      desc.innerText = `נבחר: ${item.val}/10 - ${item.label}`;
+    }
+  }
+
   setSurveyVal(type, val) {
     const todayStr = this.formatDate(new Date());
     if (!this.recoveryLogs[todayStr]) {
       this.recoveryLogs[todayStr] = {
         fatigue: 7,
         mood: 8,
+        stress: 3,
         notes: '',
         period: { isPeriod: false, flow: 'medium', symptoms: [] }
       };
@@ -611,6 +770,7 @@ class LibbyFitApp {
       this.recoveryLogs[todayStr] = {
         fatigue: 7,
         mood: 8,
+        stress: 3,
         notes: '',
         period: { isPeriod: false, flow: 'medium', symptoms: [] }
       };
@@ -668,6 +828,7 @@ class LibbyFitApp {
       this.recoveryLogs[todayStr] = {
         fatigue: 7,
         mood: 8,
+        stress: 3,
         notes: '',
         period: { isPeriod: false, flow: 'medium', symptoms: [] }
       };
@@ -680,7 +841,7 @@ class LibbyFitApp {
     if (window.confetti) {
       window.confetti({ particleCount: 45, spread: 65, origin: { y: 0.8 } });
     }
-    alert('מדד ההתאוששות והווסת נשמרו בהצלחה! 💙🩸');
+    alert('הסקר היומי ומדד הלחץ נשמרו בהצלחה! 💙');
     this.render();
   }
 
@@ -763,6 +924,7 @@ class LibbyFitApp {
   closeModal() {
     this.activeModal = null;
     this.editingWorkout = null;
+    this.completingWorkout = null;
     this.detailWorkout = null;
     this.editingTemplate = null;
     this.render();
@@ -770,7 +932,7 @@ class LibbyFitApp {
 
   exportBackup() {
     const data = {
-      version: '1.1',
+      version: '1.2',
       exportedAt: new Date().toISOString(),
       workouts: this.workouts,
       templates: this.templates,

@@ -1,182 +1,9 @@
-﻿// Modals for LibbyFit: Workout Form, Details, Templates, PRs, Backup
-
-function renderModalContainer() {
-  if (!app.activeModal) return '';
-
-  let content = '';
-  if (app.activeModal === 'workoutForm') content = renderWorkoutFormModal();
-  if (app.activeModal === 'workoutDetail') content = renderWorkoutDetailModal();
-  if (app.activeModal === 'templateForm') content = renderTemplateFormModal();
-  if (app.activeModal === 'prForm') content = renderPRFormModal();
-  if (app.activeModal === 'updatePRModal') content = renderUpdatePRModal();
-  if (app.activeModal === 'backupModal') content = renderBackupModal();
-
-  return `
-    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 overflow-y-auto">
-      <div class="bg-white rounded-3xl max-w-md w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        ${content}
-      </div>
-    </div>
-  `;
-}
-
-function renderWorkoutFormModal() {
-  const w = app.editingWorkout;
-  const isGym = w.type === 'gym';
-  const isVolleyball = w.type === 'volleyball';
-
-  return `
-    <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-      <h3 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-        <span>✨ רישום אימון חדש</span>
-      </h3>
-      <button onclick="app.closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-    </div>
-
-    <div class="p-4 overflow-y-auto space-y-4 flex-1">
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="text-[11px] font-bold text-slate-600">תאריך האימון</label>
-          <input type="date" id="w-date" value="${w.date}" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 font-semibold">
-        </div>
-        <div>
-          <label class="text-[11px] font-bold text-slate-600">משך זמן (דקות)</label>
-          <input type="number" id="w-duration" value="${w.duration || 60}" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1">
-        </div>
-      </div>
-
-      <div>
-        <label class="text-[11px] font-bold text-slate-600 mb-1 block">סוג האימון</label>
-        <div class="grid grid-cols-3 gap-1.5">
-          ${Object.values(SPORT_CONFIGS).map(cfg => `
-            <button type="button" onclick="app.changeWorkoutType('${cfg.id}')" class="p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition ${w.type === cfg.id ? 'border-brand-500 bg-brand-50 text-brand-700 ring-1 ring-brand-300' : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'}">
-              <span class="text-base">${cfg.emoji}</span>
-              <span>${cfg.name}</span>
-            </button>
-          `).join('')}
-        </div>
-      </div>
-
-      <div>
-        <label class="text-[11px] font-bold text-slate-600">כותרת האימון</label>
-        <input type="text" id="w-title" value="${w.title || ''}" placeholder="${SPORT_CONFIGS[w.type]?.name || 'אימון'}" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1">
-      </div>
-
-      ${isVolleyball ? `
-        <div class="bg-cyan-50/70 border border-cyan-200 p-3 rounded-2xl space-y-3">
-          <h4 class="text-xs font-bold text-cyan-800 flex items-center gap-1">
-            <span>🏐 פרטי כדורעף ייעודיים</span>
-          </h4>
-          
-          <div>
-            <label class="text-[11px] font-bold text-slate-600">עם מי שיחקת? (שותפות/חברות)</label>
-            <input type="text" id="w-partner" value="${w.partner || ''}" placeholder="למשל: נועה, מאי, שירה" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 bg-white">
-            <div class="flex flex-wrap gap-1 mt-1.5">
-              <span class="text-[10px] text-slate-400 self-center">מהיר:</span>
-              ${app.recentTeammates.map(name => `
-                <button type="button" onclick="app.addTeammateToInput('${name}')" class="text-[10px] bg-white border border-cyan-200 text-cyan-700 px-2 py-0.5 rounded-full hover:bg-cyan-100">
-                  + ${name}
-                </button>
-              `).join('')}
-            </div>
-          </div>
-
-          <div>
-            <label class="text-[11px] font-bold text-slate-600">קישור לווידאו של האימון / המשחק (YouTube / Drive):</label>
-            <input type="url" id="w-video" value="${w.videoUrl || ''}" placeholder="https://..." class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 bg-white" dir="ltr">
-          </div>
-        </div>
-      ` : ''}
-
-      ${isGym ? `
-        <div class="bg-blue-50/70 border border-blue-200 p-3 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center">
-            <h4 class="text-xs font-bold text-blue-800">🏋️‍♀️ תרגילי האימון</h4>
-            <div class="flex gap-1">
-              <button type="button" onclick="app.addExerciseToWorkout()" class="text-[11px] bg-blue-600 text-white font-bold px-2 py-1 rounded-lg hover:bg-blue-700">
-                + תרגיל
-              </button>
-            </div>
-          </div>
-
-          <div class="bg-white p-2 rounded-xl border border-blue-100 flex items-center justify-between text-xs">
-            <span class="text-slate-500">טען מתבנית קבועה:</span>
-            <select onchange="app.loadTemplateIntoCurrentWorkout(this.value)" class="p-1 rounded-lg border border-slate-200 text-xs font-bold text-blue-700 focus:outline-none">
-              <option value="">בחרי תבנית...</option>
-              ${app.templates.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
-            </select>
-          </div>
-
-          <div class="space-y-2.5" id="workout-exercises-container">
-            ${w.exercises.map((ex, exIdx) => `
-              <div class="bg-white p-2.5 rounded-xl border border-blue-100 space-y-2">
-                <div class="flex items-center justify-between">
-                  <input type="text" value="${ex.name}" onchange="app.updateExName(${exIdx}, this.value)" placeholder="שם התרגיל" class="text-xs font-bold text-slate-800 border-b border-slate-200 focus:border-blue-500 focus:outline-none p-1 flex-1 ml-2">
-                  
-                  <label class="text-[11px] text-slate-500 flex items-center gap-1 cursor-pointer ml-2">
-                    <input type="checkbox" ${ex.isBodyweight ? 'checked' : ''} onchange="app.toggleExBodyweight(${exIdx}, this.checked)">
-                    <span>משקל גוף</span>
-                  </label>
-
-                  <button type="button" onclick="app.removeExerciseFromWorkout(${exIdx})" class="text-slate-300 hover:text-red-500">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                </div>
-
-                <div class="space-y-1">
-                  <div class="grid grid-cols-12 gap-1 text-[10px] font-bold text-slate-400 text-center">
-                    <span class="col-span-2">סט</span>
-                    <span class="col-span-4">משקל (ק"ג)</span>
-                    <span class="col-span-4">חזרות</span>
-                    <span class="col-span-2">בוצע</span>
-                  </div>
-                  ${ex.sets.map((s, sIdx) => `
-                    <div class="grid grid-cols-12 gap-1 items-center">
-                      <span class="col-span-2 text-center text-xs font-bold text-slate-400">${s.setNum || (sIdx + 1)}</span>
-                      <div class="col-span-4">
-                        <input type="number" ${ex.isBodyweight ? 'disabled placeholder="-"' : `value="${s.weight}" placeholder="0"`} onchange="app.updateSetWeight(${exIdx}, ${sIdx}, this.value)" class="w-full text-center text-xs p-1 rounded-lg border border-slate-200 ${ex.isBodyweight ? 'bg-slate-100 text-slate-400' : ''}">
-                      </div>
-                      <div class="col-span-4">
-                        <input type="number" value="${s.reps}" placeholder="10" onchange="app.updateSetReps(${exIdx}, ${sIdx}, this.value)" class="w-full text-center text-xs p-1 rounded-lg border border-slate-200">
-                      </div>
-                      <div class="col-span-2 text-center">
-                        <input type="checkbox" ${s.done ? 'checked' : ''} onchange="app.updateSetDone(${exIdx}, ${sIdx}, this.checked)" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500">
-                      </div>
-                    </div>
-                  `).join('')}
-                </div>
-
-                <button type="button" onclick="app.addSetToExercise(${exIdx})" class="text-[10px] text-blue-600 font-bold hover:underline">
-                  + הוסיפי סט
-                </button>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
-
-      <div>
-        <label class="text-[11px] font-bold text-slate-600">הערות ודגשים לאימון</label>
-        <textarea id="w-notes" rows="2" placeholder="איך הרגיש? דגשים לשיפור בפעם הבאה..." class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1">${w.notes || ''}</textarea>
-      </div>
-    </div>
-
-    <div class="p-3 border-t border-slate-100 flex gap-2 bg-slate-50">
-      <button type="button" onclick="app.closeModal()" class="flex-1 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-xl transition">
-        ביטול
-      </button>
-      <button type="button" onclick="app.saveWorkoutFromForm()" class="flex-2 bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow transition active:scale-95">
-        שמירת אימון ✨
-      </button>
-    </div>
-  `;
-}
+﻿// Modals Extra: Workout Detail, Templates, PRs, Backup
 
 function renderWorkoutDetailModal() {
   const w = app.detailWorkout;
   const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
+  const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
 
   return `
     <div class="p-4 border-b border-slate-100 flex items-center justify-between" style="background-color: ${cfg.lightBg};">
@@ -184,7 +11,7 @@ function renderWorkoutDetailModal() {
         <span class="text-2xl">${cfg.emoji}</span>
         <div>
           <h3 class="font-bold text-sm text-slate-800">${w.title || cfg.name}</h3>
-          <span class="text-xs text-slate-500">${app.formatHebrewDate(w.date)} • ${w.duration || 60} דקות</span>
+          <span class="text-xs text-slate-500">${app.formatHebrewDate(w.date)} ${timeDisplay ? `• ⏰ ${timeDisplay}` : ''}</span>
         </div>
       </div>
       <button onclick="app.closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
@@ -193,6 +20,15 @@ function renderWorkoutDetailModal() {
     </div>
 
     <div class="p-4 overflow-y-auto space-y-3 flex-1 text-xs">
+      ${w.isPlanned ? `
+        <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-center justify-between">
+          <span class="font-bold text-amber-800">אימון זה מסומן כמתוכנן ⏳</span>
+          <button onclick="app.completePlannedWorkout('${w.id}')" class="bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-emerald-700">
+            סמני כבוצע ✓
+          </button>
+        </div>
+      ` : ''}
+
       ${w.partner ? `
         <div class="bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl flex items-center gap-2">
           <i data-lucide="users" class="w-4 h-4 text-cyan-600"></i>
@@ -430,7 +266,7 @@ function renderBackupModal() {
           <li>פתחי את האתר בדפדפן <strong>Chrome</strong> בטלפון שלך.</li>
           <li>לחצי על <strong>שלוש הנקודות (⋮)</strong> בפינה למעלה.</li>
           <li>בחרי באפשרות <strong>"הוסף למסך הבית"</strong> (או "התקן אפליקציה").</li>
-          <li>זהו! LibbyFit תופיע כאפליקציה רגילה עם האייקון שלך במסך הבית 🏐</li>
+          <li>זהו! LibbyFit תופיע כאפליקציה רגילה עם האייקון שלך במסך הבית 🏐🏋️‍♀️🎾🧗‍♀️</li>
         </ol>
       </div>
 
