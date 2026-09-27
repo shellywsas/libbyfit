@@ -190,9 +190,6 @@ class LibiFitApp {
 
   init() {
     this.render();
-    if (window.firebaseService && window.firebaseService.currentUser) {
-      window.firebaseService.handleUserLogin(window.firebaseService.currentUser);
-    }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
     }
@@ -1339,27 +1336,11 @@ class LibiFitApp {
     this.render();
   }
 
-  async signInGoogle() {
-    this.authLoading = true;
-    this.authError = '';
-    this.render();
-    try {
-      await window.firebaseService.signInWithGoogle();
-      this.authLoading = false;
-      this.closeModal();
-    } catch (e) {
-      console.error('Google sign-in error:', e);
-      this.authLoading = false;
-      this.authError = 'שגיאה בהתחברות עם Google: ' + (e.message || e);
-      this.render();
-    }
-  }
-
-  async loginEmail() {
-    const email = document.getElementById('auth-email')?.value;
+  async loginAccount() {
+    const username = document.getElementById('auth-username')?.value;
     const password = document.getElementById('auth-password')?.value;
-    if (!email || !password) {
-      this.authError = 'נא למלא כתובת אימייל וסיסמה';
+    if (!username || !password) {
+      this.authError = 'נא למלא שם משתמש וסיסמה';
       this.render();
       return;
     }
@@ -1367,39 +1348,22 @@ class LibiFitApp {
     this.authError = '';
     this.render();
     try {
-      await window.firebaseService.signInWithEmail(email, password);
+      await window.firebaseService.login(username, password);
       this.authLoading = false;
       this.closeModal();
     } catch (e) {
-      console.error('Email login error:', e);
-      let msg = e.message;
-      if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
-        msg = 'כתובת אימייל או סיסמה שגויים';
-      } else if (e.code === 'auth/invalid-email') {
-        msg = 'כתובת אימייל לא תקינה';
-      }
-      this.authError = msg;
+      console.error('Login error:', e);
+      this.authError = e.message || 'שגיאה בהתחברות';
       this.authLoading = false;
       this.render();
     }
   }
 
-  async registerEmail() {
-    const name = document.getElementById('reg-name')?.value;
-    const email = document.getElementById('reg-email')?.value;
+  async registerAccount() {
+    const username = document.getElementById('reg-username')?.value;
     const password = document.getElementById('reg-password')?.value;
-    if (!name || !name.trim()) {
-      this.authError = 'נא למלא את שמך (למשל: ליבי, שירה, מאי)';
-      this.render();
-      return;
-    }
-    if (!email || !password) {
-      this.authError = 'נא למלא אימייל וסיסמה';
-      this.render();
-      return;
-    }
-    if (password.length < 6) {
-      this.authError = 'הסיסמה חייבת להכיל לפחות 6 תווים';
+    if (!username || !password) {
+      this.authError = 'נא למלא שם משתמש וסיסמה';
       this.render();
       return;
     }
@@ -1407,34 +1371,14 @@ class LibiFitApp {
     this.authError = '';
     this.render();
     try {
-      await window.firebaseService.signUpWithEmail(name, email, password);
+      await window.firebaseService.register(username, password);
       this.authLoading = false;
       this.closeModal();
     } catch (e) {
-      console.error('Email registration error:', e);
-      let msg = e.message;
-      if (e.code === 'auth/email-already-in-use') {
-        msg = 'כתובת האימייל כבר קיימת. נסי להתחבר במקום!';
-      } else if (e.code === 'auth/weak-password') {
-        msg = 'הסיסמה חלשה מדי (נדרשים לפחות 6 תווים)';
-      }
-      this.authError = msg;
+      console.error('Registration error:', e);
+      this.authError = e.message || 'שגיאה ביצירת החשבון';
       this.authLoading = false;
       this.render();
-    }
-  }
-
-  async resetPasswordEmail() {
-    const email = document.getElementById('auth-email')?.value;
-    if (!email || !email.trim()) {
-      alert('נא להקליד את כתובת האימייל שלך בשדה האימייל למעלה, ואז ללחוץ שוב כדי לקבל קישור לאיפוס סיסמה.');
-      return;
-    }
-    try {
-      await firebase.auth().sendPasswordResetEmail(email.trim());
-      alert('קישור לאיפוס סיסמה נשלח אל: ' + email.trim());
-    } catch (e) {
-      alert('שגיאה בשליחת קישור איפוס: ' + (e.message || e));
     }
   }
 
@@ -1445,6 +1389,21 @@ class LibiFitApp {
     await window.firebaseService.updateDisplayName(newName);
     this.closeModal();
     this.render();
+  }
+
+  async updateUserPassword() {
+    const input = document.getElementById('profile-new-password');
+    if (!input || !input.value.trim()) {
+      alert('נא להקליד סיסמה חדשה');
+      return;
+    }
+    try {
+      await window.firebaseService.updatePassword(input.value.trim());
+      alert('הסיסמה עודכנה בהצלחה! 🔑');
+      input.value = '';
+    } catch (e) {
+      alert('שגיאה בעדכון הסיסמה: ' + (e.message || e));
+    }
   }
 
   updateLocalName() {
@@ -1463,9 +1422,9 @@ class LibiFitApp {
     }
   }
 
-  async signOutFirebase() {
+  signOutFirebase() {
     if (confirm('האם את בטוחה שברצונך להתנתק מהחשבון?')) {
-      await window.firebaseService.signOut();
+      window.firebaseService.signOut();
       this.closeModal();
       this.render();
     }

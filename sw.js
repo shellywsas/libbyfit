@@ -1,4 +1,4 @@
-const CACHE_NAME = 'libifit-v7';
+const CACHE_NAME = 'libifit-v8';
 const ASSETS = [
   './',
   './index.html',
