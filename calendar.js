@@ -1,4 +1,4 @@
-﻿// Calendar Views & Logic for LibbyFit
+// Calendar Views & Logic for LibbyFit
 
 function renderCalendarTab() {
   return `
@@ -192,11 +192,12 @@ function renderMonthlyCalendar() {
 
         <div class="flex flex-wrap gap-1 items-center justify-center overflow-hidden">
           ${dayWorkouts.map(w => {
+            const wColor = getWorkoutColor(w);
             if (w.isPlanned) {
-              return `<span class="w-2.5 h-2.5 rounded-full border border-amber-500 bg-amber-100" title="מתוכנן: ${w.title}"></span>`;
+              return `<span class="w-2.5 h-2.5 rounded-full border-2 border-amber-500 bg-amber-100 shadow-xs" title="מתוכנן: ${w.title}"></span>`;
             }
             const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
-            return `<span class="w-2 h-2 rounded-full" style="background-color: ${cfg.accentColor};" title="${cfg.name}"></span>`;
+            return `<span class="w-2.5 h-2.5 rounded-full shadow-xs" style="background-color: ${wColor};" title="${w.title || cfg.name}"></span>`;
           }).join('')}
         </div>
       </div>
@@ -330,14 +331,15 @@ function renderWorkoutCard(w, expanded = false) {
 
   // Regular completed workout
   const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
+  const wColor = getWorkoutColor(w);
   const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
 
   return `
     <div onclick="app.openWorkoutDetail('${w.id}')" class="cursor-pointer bg-white rounded-xl border border-slate-100 hover:border-slate-200 p-2.5 shadow-sm transition hover:shadow flex flex-col gap-1.5 relative overflow-hidden">
-      <div class="absolute right-0 top-0 bottom-0 w-1.5" style="background-color: ${cfg.accentColor};"></div>
+      <div class="absolute right-0 top-0 bottom-0 w-1.5" style="background-color: ${wColor};"></div>
       <div class="flex items-center justify-between pr-2">
         <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${cfg.badgeClass} flex items-center gap-1">
+          <span class="px-2 py-0.5 rounded-md text-[11px] font-bold text-white flex items-center gap-1 shadow-xs" style="background-color: ${wColor};">
             <span>${cfg.emoji}</span>
             <span>${cfg.name}</span>
           </span>

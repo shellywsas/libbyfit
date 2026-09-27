@@ -1,4 +1,4 @@
-﻿// Modals Core: Workout Form, Complete Planned Modal, and Container
+// Modals Core: Workout Form, Complete Planned Modal, and Container
 
 function renderModalContainer() {
   if (!app.activeModal) return '';
@@ -11,6 +11,7 @@ function renderModalContainer() {
   if (app.activeModal === 'prForm') content = renderPRFormModal();
   if (app.activeModal === 'updatePRModal') content = renderUpdatePRModal();
   if (app.activeModal === 'backupModal') content = renderBackupModal();
+  if (app.activeModal === 'installGuideModal') content = renderInstallGuideModal();
 
   return `
     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 overflow-y-auto">
@@ -94,6 +95,35 @@ function renderWorkoutFormModal() {
                 <span>${cfg.name}</span>
               </button>
             `).join('')}
+          </div>
+        </div>
+
+        <!-- Custom Color Picker -->
+        <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+              <span>🎨 בחרי צבע לאימון ביומן:</span>
+            </label>
+            <span class="text-[10px] text-slate-400 font-medium">בלחיצה אחת</span>
+          </div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            ${WORKOUT_COLORS.map(c => {
+              const isSelected = (w.color || getWorkoutColor(w)) === c.hex;
+              return `
+                <button
+                  type="button"
+                  onclick="app.setWorkoutColor('${c.hex}')"
+                  class="w-7 h-7 rounded-full transition-all active:scale-90 flex items-center justify-center ${isSelected ? 'ring-2 ring-offset-2 ring-brand-500 scale-110 shadow-sm' : 'hover:scale-105'}"
+                  style="background-color: ${c.hex};"
+                  title="${c.name}">
+                  ${isSelected ? '<i data-lucide="check" class="w-3.5 h-3.5 text-white stroke-[3]"></i>' : ''}
+                </button>
+              `;
+            }).join('')}
+            <label class="w-7 h-7 rounded-full border-2 border-dashed border-slate-300 hover:border-brand-500 flex items-center justify-center cursor-pointer relative bg-white" title="בחירת כל צבע אחר">
+              <input type="color" value="${w.color || getWorkoutColor(w)}" onchange="app.setWorkoutColor(this.value)" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer">
+              <i data-lucide="palette" class="w-3.5 h-3.5 text-slate-400"></i>
+            </label>
           </div>
         </div>
 
@@ -250,6 +280,35 @@ function renderCompletePlannedModal() {
               <span>${cfg.name}</span>
             </button>
           `).join('')}
+        </div>
+      </div>
+
+      <!-- Custom Color Picker for Completing -->
+      <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+            <span>🎨 בחרי צבע לאימון ביומן:</span>
+          </label>
+          <span class="text-[10px] text-slate-400 font-medium">בלחיצה אחת</span>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          ${WORKOUT_COLORS.map(c => {
+            const isSelected = (w.color || getWorkoutColor(w)) === c.hex;
+            return `
+              <button
+                type="button"
+                onclick="app.setCompletingColor('${c.hex}')"
+                class="w-7 h-7 rounded-full transition-all active:scale-90 flex items-center justify-center ${isSelected ? 'ring-2 ring-offset-2 ring-emerald-500 scale-110 shadow-sm' : 'hover:scale-105'}"
+                style="background-color: ${c.hex};"
+                title="${c.name}">
+                ${isSelected ? '<i data-lucide="check" class="w-3.5 h-3.5 text-white stroke-[3]"></i>' : ''}
+              </button>
+            `;
+          }).join('')}
+          <label class="w-7 h-7 rounded-full border-2 border-dashed border-slate-300 hover:border-emerald-500 flex items-center justify-center cursor-pointer relative bg-white" title="בחירת כל צבע אחר">
+            <input type="color" value="${w.color || getWorkoutColor(w)}" onchange="app.setCompletingColor(this.value)" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer">
+            <i data-lucide="palette" class="w-3.5 h-3.5 text-slate-400"></i>
+          </label>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-﻿// Modals Extra: Workout Detail, Templates, PRs, Backup
+// Modals Extra: Workout Detail, Templates, PRs, Backup
 
 function renderWorkoutDetailModal() {
   const w = app.detailWorkout;
@@ -79,6 +79,32 @@ function renderWorkoutDetailModal() {
           <p class="text-slate-700 mt-0.5 leading-relaxed">${w.notes}</p>
         </div>
       ` : ''}
+
+      <!-- Quick Change Workout Color -->
+      <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-700 text-[11px] flex items-center gap-1">
+            <span>🎨 שינוי צבע האימון ביומן:</span>
+          </span>
+          <span class="text-[10px] text-slate-400">מתעדכן מיד</span>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          ${WORKOUT_COLORS.map(c => `
+            <button
+              type="button"
+              onclick="app.updateWorkoutColorDirect('${w.id}', '${c.hex}')"
+              class="w-6 h-6 rounded-full transition-all active:scale-90 flex items-center justify-center ${w.color === c.hex ? 'ring-2 ring-brand-500 scale-110 shadow-sm' : ''}"
+              style="background-color: ${c.hex};"
+              title="${c.name}">
+              ${w.color === c.hex ? '<i data-lucide="check" class="w-3 h-3 text-white stroke-[3]"></i>' : ''}
+            </button>
+          `).join('')}
+          <label class="w-6 h-6 rounded-full border border-dashed border-slate-300 flex items-center justify-center cursor-pointer relative bg-white" title="בחירת צבע אישי">
+            <input type="color" value="${w.color || getWorkoutColor(w)}" onchange="app.updateWorkoutColorDirect('${w.id}', this.value)" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer">
+            <i data-lucide="palette" class="w-3 h-3 text-slate-400"></i>
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="p-3 border-t border-slate-100 flex justify-between bg-slate-50">
@@ -303,3 +329,85 @@ function renderBackupModal() {
     </div>
   `;
 }
+
+function renderInstallGuideModal() {
+  return `
+    <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-l from-brand-600 via-sky-500 to-cyan-500 text-white">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-xl bg-white/20 p-1 flex items-center justify-center border border-white/30 shadow-inner">
+          <img src="./app-logo.png" alt="LibbyFit" class="w-full h-full object-contain drop-shadow">
+        </div>
+        <div>
+          <h3 class="font-bold text-sm font-display">התקנת LibbyFit בטלפון</h3>
+          <p class="text-[11px] text-brand-100">אפליקציה מלאה במסך הבית ✨</p>
+        </div>
+      </div>
+      <button onclick="app.closeModal()" class="text-white/80 hover:text-white p-1">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <div class="p-4 overflow-y-auto space-y-3 flex-1 text-xs">
+      <div class="text-center p-3 bg-gradient-to-br from-brand-50 to-cyan-50 rounded-2xl border border-brand-200 space-y-2">
+        <div class="w-16 h-16 mx-auto rounded-2xl overflow-hidden shadow-md border-2 border-white">
+          <img src="./app-logo.png" alt="Logo" class="w-full h-full object-cover">
+        </div>
+        <h4 class="font-bold text-sm text-brand-900">LibbyFit - יומן האימונים של ליבי</h4>
+        <p class="text-[11px] text-brand-700">עובד חלק כמו אפליקציה מחנות האפליקציות, שומר נתונים ועובד גם ללא קליטה!</p>
+      </div>
+
+      <!-- If prompt is ready, offer 1-click install button -->
+      ${window.deferredInstallPrompt ? `
+        <button onclick="app.triggerNativeInstall()" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold py-3 px-4 rounded-2xl shadow-md text-sm flex items-center justify-center gap-2 transition">
+          <i data-lucide="download" class="w-5 h-5 stroke-[2.5]"></i>
+          <span>לחצי כאן להתקנה מיידית! 📲</span>
+        </button>
+      ` : ''}
+
+      <!-- WhatsApp Warning & Fix -->
+      <div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl space-y-1.5">
+        <div class="flex items-center gap-1.5 text-amber-900 font-bold">
+          <span>⚠️ הגעת מקישור בוואטסאפ (WhatsApp)?</span>
+        </div>
+        <p class="text-[11px] text-amber-800 leading-relaxed">
+          וואטסאפ פותח אתרים בתוך דפדפן פנימי סגור שחוסם התקנת אפליקציות.<br>
+          <b>הפתרון הפשוט:</b> לחצי על <b>3 הנקודות (⋮)</b> בפינה העליונה ובחרי <b>"פתח בדפדפן" / "פתח ב-Chrome"</b>!
+        </p>
+      </div>
+
+      <!-- Android Chrome Instructions -->
+      <div class="bg-sky-50 border border-sky-200 p-3 rounded-2xl space-y-2">
+        <div class="flex items-center gap-1.5 text-sky-900 font-bold">
+          <i data-lucide="smartphone" class="w-4 h-4 text-sky-600"></i>
+          <span>התקנה ב-Android בדפדפן Chrome:</span>
+        </div>
+        <ol class="list-decimal list-inside space-y-1 text-sky-800 text-[11px] font-medium leading-relaxed pr-1">
+          <li>פתחי את האתר בדפדפן <b>Chrome</b>.</li>
+          <li>לחצי על <b>3 הנקודות (⋮)</b> בפינה העליונה.</li>
+          <li>בחרי באפשרות <b>"הוספה למסך הבית" (Add to Home screen)</b> או <b>"התקנת אפליקציה"</b>.</li>
+          <li>אשרי - והאפליקציה תופיע במסך הבית עם האייקון החדש! 🎉</li>
+        </ol>
+      </div>
+
+      <!-- iPhone Safari Instructions -->
+      <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl space-y-2">
+        <div class="flex items-center gap-1.5 text-slate-800 font-bold">
+          <i data-lucide="apple" class="w-4 h-4 text-slate-700"></i>
+          <span>התקנה ב-iPhone (Safari):</span>
+        </div>
+        <ol class="list-decimal list-inside space-y-1 text-slate-600 text-[11px] pr-1">
+          <li>פתחי את האתר בדפדפן <b>Safari</b>.</li>
+          <li>לחצי על כפתור השיתוף בתחתית המסך (ריבוע עם חץ עולה ⬆️).</li>
+          <li>גללי ובחרי <b>"הוסף למסך הבית"</b> (Add to Home Screen).</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="p-3 border-t border-slate-100 flex justify-end bg-slate-50">
+      <button onclick="app.closeModal()" class="w-full bg-brand-600 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-brand-700 transition">
+        הבנתי, תודה!
+      </button>
+    </div>
+  `;
+}
+

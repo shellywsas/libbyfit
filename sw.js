@@ -1,11 +1,18 @@
-﻿const CACHE_NAME = 'libbyfit-v1';
+const CACHE_NAME = 'libbyfit-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './data.js',
+  './calendar.js',
+  './views.js',
+  './modals_core.js',
+  './modals_extra.js',
+  './app.js',
   './favicon.png',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './app-logo.png'
 ];
 
 self.addEventListener('install', (e) => {

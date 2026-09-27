@@ -1,4 +1,4 @@
-﻿// LibbyFit Data & Config
+// LibbyFit Data & Config
 const DEFAULT_TEMPLATES = [
   {
     id: 'tmpl-1',
@@ -227,4 +227,26 @@ function formatWorkoutTime(startTime, endTime) {
   }
 
   return `${startTime} - ${endTime} ${durationText ? `(${durationText})` : ''}`;
+}
+
+// Preset Workout Palette for Custom Colors
+const WORKOUT_COLORS = [
+  { name: 'טורקיז בוהק', hex: '#06B6D4' },
+  { name: 'תכלת שמיים', hex: '#0284C7' },
+  { name: 'כחול עמוק', hex: '#2563EB' },
+  { name: 'ירוק מנטה', hex: '#10B981' },
+  { name: 'ירוק ליים', hex: '#84CC16' },
+  { name: 'סגול לבנדר', hex: '#8B5CF6' },
+  { name: 'ורוד פוקסיה', hex: '#EC4899' },
+  { name: 'קורל כתום', hex: '#F97316' },
+  { name: 'צהוב זהב', hex: '#EAB308' },
+  { name: 'אדום אנרגטי', hex: '#EF4444' }
+];
+
+function getWorkoutColor(w) {
+  if (!w) return '#0284C7';
+  if (w.color) return w.color;
+  if (w.isPlanned) return '#F59E0B';
+  const cfg = SPORT_CONFIGS[w.type];
+  return cfg ? cfg.accentColor : '#0EA5E9';
 }

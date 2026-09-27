@@ -1,4 +1,4 @@
-﻿// LibbyFit Main Application Controller
+// LibbyFit Main Application Controller
 
 class LibbyFitApp {
   constructor() {
@@ -24,6 +24,8 @@ class LibbyFitApp {
     this.editingPR = null;
 
     this.recentTeammates = this.loadTeammates();
+    this.isInstalled = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone;
+    this.isWhatsApp = /WhatsApp/i.test(navigator.userAgent);
   }
 
   loadState() {
@@ -158,6 +160,7 @@ class LibbyFitApp {
   render() {
     const appEl = document.getElementById('app');
     appEl.innerHTML = `
+      ${this.renderWhatsAppBanner()}
       ${this.renderHeader()}
       ${this.renderTimerBar()}
       <main class="flex-1 overflow-y-auto px-4 py-3">
@@ -172,14 +175,29 @@ class LibbyFitApp {
     }
   }
 
+  renderWhatsAppBanner() {
+    if (!this.isWhatsApp || this.isInstalled) return '';
+    return `
+      <div class="bg-amber-400 text-amber-950 px-3 py-1.5 text-[11px] font-bold flex items-center justify-between shadow-xs sticky top-0 z-40">
+        <span class="flex items-center gap-1.5 truncate">
+          <span>⚠️</span>
+          <span>נפתח בוואטסאפ? לחצי ⋮ למעלה ובחרי "פתח בכרום" להתקנה!</span>
+        </span>
+        <button onclick="app.openModal('installGuideModal')" class="bg-amber-950 text-white px-2 py-0.5 rounded text-[10px] whitespace-nowrap mr-1 hover:bg-amber-900">
+          מדריך
+        </button>
+      </div>
+    `;
+  }
+
   renderHeader() {
     return `
       <header class="bg-gradient-to-l from-brand-600 via-sky-500 to-cyan-500 text-white pt-4 pb-3 px-4 shadow-md sticky top-0 z-30">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2 space-x-reverse">
             <!-- Custom Multi-Sport Logo Badge (Dumbbell, Volleyball, Tennis, Climbing) -->
-            <div class="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner p-1">
-              <img src="./favicon.png" alt="LibbyFit Logo" class="w-full h-full object-contain drop-shadow">
+            <div class="w-11 h-11 rounded-2xl overflow-hidden shadow-md border-2 border-white/40 flex-shrink-0 bg-white">
+              <img src="./app-logo.png" alt="LibbyFit Logo" class="w-full h-full object-cover">
             </div>
             <div>
               <h1 class="text-xl font-bold font-display tracking-tight flex items-center gap-1.5">
@@ -190,6 +208,12 @@ class LibbyFitApp {
             </div>
           </div>
           <div class="flex items-center gap-1.5">
+            ${!this.isInstalled ? `
+              <button onclick="app.promptInstall()" class="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-2.5 py-1.5 rounded-xl shadow-sm text-xs transition active:scale-95 border border-emerald-400" title="התקנת האפליקציה בטלפון">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>התקנה</span>
+              </button>
+            ` : ''}
             <button onclick="app.openModal('backupModal')" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 transition active:scale-95" title="גיבוי ושמירה">
               <i data-lucide="shield-check" class="w-5 h-5"></i>
             </button>
@@ -313,6 +337,7 @@ class LibbyFitApp {
       partner: '',
       videoUrl: '',
       isPlanned: false,
+      color: '#06B6D4',
       exercises: []
     };
     this.openModal('workoutForm');
@@ -325,12 +350,39 @@ class LibbyFitApp {
 
   changeWorkoutType(typeId) {
     this.editingWorkout.type = typeId;
+    this.editingWorkout.color = SPORT_CONFIGS[typeId]?.accentColor || '#0EA5E9';
     if (typeId === 'gym' && (!this.editingWorkout.exercises || this.editingWorkout.exercises.length === 0)) {
       this.editingWorkout.exercises = [
         { name: 'סקוואט עם מוט', isBodyweight: false, sets: [{ setNum: 1, weight: 40, reps: 8, done: true }, { setNum: 2, weight: 40, reps: 8, done: true }] }
       ];
     }
     this.render();
+  }
+
+  setWorkoutColor(hex) {
+    if (this.editingWorkout) {
+      this.editingWorkout.color = hex;
+      this.render();
+    }
+  }
+
+  setCompletingColor(hex) {
+    if (this.completingWorkout) {
+      this.completingWorkout.color = hex;
+      this.render();
+    }
+  }
+
+  updateWorkoutColorDirect(id, hex) {
+    const w = this.workouts.find(item => item.id === id);
+    if (w) {
+      w.color = hex;
+      this.saveState();
+      if (this.detailWorkout && this.detailWorkout.id === id) {
+        this.detailWorkout.color = hex;
+      }
+      this.render();
+    }
   }
 
   addTeammateToInput(name) {
@@ -439,6 +491,8 @@ class LibbyFitApp {
         partnerVal.split(',').forEach(p => this.saveTeammate(p.trim()));
       }
     }
+
+    w.color = w.color || getWorkoutColor(w);
 
     const existingIdx = this.workouts.findIndex(item => item.id === w.id);
     if (existingIdx >= 0) {
@@ -557,6 +611,7 @@ class LibbyFitApp {
 
     // Mark as NO LONGER planned!
     cw.isPlanned = false;
+    cw.color = cw.color || getWorkoutColor(cw);
 
     const idx = this.workouts.findIndex(w => w.id === cw.id);
     if (idx >= 0) {
@@ -973,7 +1028,54 @@ class LibbyFitApp {
     };
     reader.readAsText(file);
   }
+
+  promptInstall() {
+    if (window.deferredInstallPrompt) {
+      window.deferredInstallPrompt.prompt().then((choice) => {
+        if (choice && choice.outcome === 'accepted') {
+          window.deferredInstallPrompt = null;
+          this.isInstalled = true;
+          this.render();
+        }
+      });
+    } else {
+      this.openModal('installGuideModal');
+    }
+  }
+
+  triggerNativeInstall() {
+    if (window.deferredInstallPrompt) {
+      window.deferredInstallPrompt.prompt().then((choice) => {
+        if (choice && choice.outcome === 'accepted') {
+          window.deferredInstallPrompt = null;
+          this.isInstalled = true;
+          this.closeModal();
+          this.render();
+        }
+      });
+    } else {
+      alert('כדי להתקין: לחצי על 3 הנקודות ⋮ בפינת הדפדפן ובחרי "הוספה למסך הבית"');
+    }
+  }
 }
+
+// Global PWA Installation Event Handlers
+window.deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.deferredInstallPrompt = e;
+  if (window.app) {
+    window.app.render();
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  window.deferredInstallPrompt = null;
+  if (window.app) {
+    window.app.isInstalled = true;
+    window.app.render();
+  }
+});
 
 window.app = new LibbyFitApp();
 document.addEventListener('DOMContentLoaded', () => {
