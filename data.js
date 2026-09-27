@@ -154,3 +154,22 @@ const SPORT_CONFIGS = {
     accentColor: '#0EA5E9'
   }
 };
+
+// 10 Distinct Vibrant Color Palette for Survey 1-10
+const SCORE_SCALE = [
+  { val: 1, color: '#DC2626', bgClass: 'bg-red-600', textClass: 'text-red-700', label: 'מותשת / ירוד מאוד' },
+  { val: 2, color: '#EF4444', bgClass: 'bg-red-500', textClass: 'text-red-600', label: 'עייפות כבדה / מצב רוח נמוך' },
+  { val: 3, color: '#EA580C', bgClass: 'bg-orange-600', textClass: 'text-orange-700', label: 'עייפה / חלשה' },
+  { val: 4, color: '#F97316', bgClass: 'bg-orange-500', textClass: 'text-orange-600', label: 'קצת עייפה' },
+  { val: 5, color: '#EAB308', bgClass: 'bg-yellow-500', textClass: 'text-yellow-700', label: 'סבבה / בינוני' },
+  { val: 6, color: '#84CC16', bgClass: 'bg-lime-500', textClass: 'text-lime-700', label: 'סבבה לגמרי' },
+  { val: 7, color: '#22C55E', bgClass: 'bg-green-500', textClass: 'text-green-700', label: 'אנרגיה טובה ומרוממת' },
+  { val: 8, color: '#14B8A6', bgClass: 'bg-teal-500', textClass: 'text-teal-700', label: 'ערנית ומלאת כוח' },
+  { val: 9, color: '#06B6D4', bgClass: 'bg-cyan-500', textClass: 'text-cyan-700', label: 'אנרגיית שיא!' },
+  { val: 10, color: '#0284C7', bgClass: 'bg-sky-600', textClass: 'text-sky-700', label: 'בעננים, עוצמה מקסימלית! 🚀' }
+];
+
+function getScoreItem(val) {
+  const num = parseInt(val) || 5;
+  return SCORE_SCALE.find(s => s.val === num) || SCORE_SCALE[4];
+}

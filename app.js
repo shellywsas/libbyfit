@@ -561,34 +561,116 @@ class LibbyFitApp {
     this.render();
   }
 
-  // Recovery & Mood
-  getValBgColor(val) {
-    if (val <= 3) return 'bg-red-500';
-    if (val <= 5) return 'bg-amber-500';
-    if (val <= 7) return 'bg-emerald-500';
-    return 'bg-cyan-500';
+  // --- RECOVERY, SURVEY PREVIEWS & PERIOD TRACKING ---
+  previewScore(type, val) {
+    const item = getScoreItem(val);
+    const badge = document.getElementById(`${type}-preview-badge`);
+    const desc = document.getElementById(`${type}-desc`);
+    if (badge) {
+      badge.style.backgroundColor = item.color;
+      badge.innerText = `${item.val} • ${item.label}`;
+    }
+    if (desc) {
+      desc.innerText = `תצוגה: ${item.val}/10 - ${item.label}`;
+    }
   }
 
-  getScoreBadgeClass(val) {
-    if (val <= 3) return 'bg-red-100 text-red-700';
-    if (val <= 5) return 'bg-amber-100 text-amber-700';
-    if (val <= 7) return 'bg-emerald-100 text-emerald-700';
-    return 'bg-cyan-100 text-cyan-800';
+  resetPreviewScore(type) {
+    const todayStr = this.formatDate(new Date());
+    const existing = this.recoveryLogs[todayStr];
+    if (!existing) return;
+    const item = getScoreItem(existing[type]);
+    const badge = document.getElementById(`${type}-preview-badge`);
+    const desc = document.getElementById(`${type}-desc`);
+    if (badge) {
+      badge.style.backgroundColor = item.color;
+      badge.innerText = `${item.val} • ${item.label}`;
+    }
+    if (desc) {
+      desc.innerText = `נבחר: ${item.val}/10 - ${item.label}`;
+    }
   }
 
   setSurveyVal(type, val) {
     const todayStr = this.formatDate(new Date());
     if (!this.recoveryLogs[todayStr]) {
-      this.recoveryLogs[todayStr] = { fatigue: 7, mood: 8, notes: '' };
+      this.recoveryLogs[todayStr] = {
+        fatigue: 7,
+        mood: 8,
+        notes: '',
+        period: { isPeriod: false, flow: 'medium', symptoms: [] }
+      };
     }
     this.recoveryLogs[todayStr][type] = val;
     this.render();
   }
 
+  togglePeriod() {
+    const todayStr = this.formatDate(new Date());
+    if (!this.recoveryLogs[todayStr]) {
+      this.recoveryLogs[todayStr] = {
+        fatigue: 7,
+        mood: 8,
+        notes: '',
+        period: { isPeriod: false, flow: 'medium', symptoms: [] }
+      };
+    }
+    if (!this.recoveryLogs[todayStr].period) {
+      this.recoveryLogs[todayStr].period = { isPeriod: false, flow: 'medium', symptoms: [] };
+    }
+    this.recoveryLogs[todayStr].period.isPeriod = !this.recoveryLogs[todayStr].period.isPeriod;
+    this.render();
+  }
+
+  setPeriodFlow(flow) {
+    const todayStr = this.formatDate(new Date());
+    if (this.recoveryLogs[todayStr] && this.recoveryLogs[todayStr].period) {
+      this.recoveryLogs[todayStr].period.flow = flow;
+      this.render();
+    }
+  }
+
+  togglePeriodSymptom(sym) {
+    const todayStr = this.formatDate(new Date());
+    if (this.recoveryLogs[todayStr] && this.recoveryLogs[todayStr].period) {
+      const arr = this.recoveryLogs[todayStr].period.symptoms || [];
+      const idx = arr.indexOf(sym);
+      if (idx >= 0) {
+        arr.splice(idx, 1);
+      } else {
+        arr.push(sym);
+      }
+      this.recoveryLogs[todayStr].period.symptoms = arr;
+      this.render();
+    }
+  }
+
+  getCycleInsights() {
+    const dates = Object.keys(this.recoveryLogs).sort().reverse();
+    const periodDates = dates.filter(d => this.recoveryLogs[d].period && this.recoveryLogs[d].period.isPeriod);
+    if (periodDates.length === 0) {
+      return 'לחצי כדי לסמן ימי ווסת ומעקב';
+    }
+    const lastPeriodDate = new Date(periodDates[0]);
+    const today = new Date();
+    const diffTime = Math.abs(today - lastPeriodDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 5) {
+      return `יום ${diffDays} למחזור 🩸`;
+    }
+    return `${diffDays} ימים מאז תחילת המחזור האחרון`;
+  }
+
   saveTodayRecovery() {
     const todayStr = this.formatDate(new Date());
     if (!this.recoveryLogs[todayStr]) {
-      this.recoveryLogs[todayStr] = { fatigue: 7, mood: 8, notes: '' };
+      this.recoveryLogs[todayStr] = {
+        fatigue: 7,
+        mood: 8,
+        notes: '',
+        period: { isPeriod: false, flow: 'medium', symptoms: [] }
+      };
     }
     const notesEl = document.getElementById('recovery-notes-input');
     if (notesEl) {
@@ -596,9 +678,9 @@ class LibbyFitApp {
     }
     this.saveState();
     if (window.confetti) {
-      window.confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
+      window.confetti({ particleCount: 45, spread: 65, origin: { y: 0.8 } });
     }
-    alert('מדד ההתאוששות נשמר בהצלחה! 💙');
+    alert('מדד ההתאוששות והווסת נשמרו בהצלחה! 💙🩸');
     this.render();
   }
 
@@ -688,7 +770,7 @@ class LibbyFitApp {
 
   exportBackup() {
     const data = {
-      version: '1.0',
+      version: '1.1',
       exportedAt: new Date().toISOString(),
       workouts: this.workouts,
       templates: this.templates,
