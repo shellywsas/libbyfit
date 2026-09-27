@@ -1,4 +1,4 @@
-const CACHE_NAME = 'libbyfit-v2';
+const CACHE_NAME = 'libbyfit-v3';
 const ASSETS = [
   './',
   './index.html',

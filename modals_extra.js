@@ -265,9 +265,15 @@ function renderUpdatePRModal() {
       </div>
     </div>
 
-    <div class="p-3 border-t border-slate-100 flex gap-2 bg-slate-50">
-      <button onclick="app.closeModal()" class="flex-1 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-xl">ביטול</button>
-      <button onclick="app.saveUpdatedPR()" class="flex-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow">עדכני שיא חדש! 👑</button>
+    <div class="p-3 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+      <button type="button" onclick="app.deletePR('${pr.id}')" class="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        <span>מחק שיא</span>
+      </button>
+      <div class="flex gap-2">
+        <button type="button" onclick="app.closeModal()" class="py-2 px-3 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-xl">ביטול</button>
+        <button type="button" onclick="app.saveUpdatedPR()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow transition active:scale-95">עדכני שיא! 👑</button>
+      </div>
     </div>
   `;
 }

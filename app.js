@@ -749,13 +749,18 @@ class LibbyFitApp {
   previewScore(type, val) {
     const item = getScoreItem(val);
     const badge = document.getElementById(`${type}-preview-badge`);
-    const desc = document.getElementById(`${type}-desc`);
+    const valEl = document.getElementById(`${type}-desc-val`);
+    const textEl = document.getElementById(`${type}-desc-text`);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
     }
-    if (desc) {
-      desc.innerText = `תצוגה: ${item.val}/10 - ${item.label}`;
+    if (valEl) {
+      valEl.innerText = item.val;
+      valEl.style.backgroundColor = item.color;
+    }
+    if (textEl) {
+      textEl.innerText = `תצוגה: ${item.label}`;
     }
   }
 
@@ -765,26 +770,36 @@ class LibbyFitApp {
     if (!existing) return;
     const item = getScoreItem(existing[type]);
     const badge = document.getElementById(`${type}-preview-badge`);
-    const desc = document.getElementById(`${type}-desc`);
+    const valEl = document.getElementById(`${type}-desc-val`);
+    const textEl = document.getElementById(`${type}-desc-text`);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
     }
-    if (desc) {
-      desc.innerText = `נבחר: ${item.val}/10 - ${item.label}`;
+    if (valEl) {
+      valEl.innerText = item.val;
+      valEl.style.backgroundColor = item.color;
+    }
+    if (textEl) {
+      textEl.innerText = item.label;
     }
   }
 
   previewStress(val) {
     const item = getStressItem(val);
     const badge = document.getElementById(`stress-preview-badge`);
-    const desc = document.getElementById(`stress-desc`);
+    const valEl = document.getElementById(`stress-desc-val`);
+    const textEl = document.getElementById(`stress-desc-text`);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
     }
-    if (desc) {
-      desc.innerText = `תצוגה: ${item.val}/10 - ${item.label}`;
+    if (valEl) {
+      valEl.innerText = item.val;
+      valEl.style.backgroundColor = item.color;
+    }
+    if (textEl) {
+      textEl.innerText = `תצוגה: ${item.label}`;
     }
   }
 
@@ -794,13 +809,18 @@ class LibbyFitApp {
     if (!existing) return;
     const item = getStressItem(existing.stress || 3);
     const badge = document.getElementById(`stress-preview-badge`);
-    const desc = document.getElementById(`stress-desc`);
+    const valEl = document.getElementById(`stress-desc-val`);
+    const textEl = document.getElementById(`stress-desc-text`);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
     }
-    if (desc) {
-      desc.innerText = `נבחר: ${item.val}/10 - ${item.label}`;
+    if (valEl) {
+      valEl.innerText = item.val;
+      valEl.style.backgroundColor = item.color;
+    }
+    if (textEl) {
+      textEl.innerText = item.label;
     }
   }
 
@@ -816,6 +836,7 @@ class LibbyFitApp {
       };
     }
     this.recoveryLogs[todayStr][type] = val;
+    this.saveState();
     this.render();
   }
 
@@ -968,6 +989,16 @@ class LibbyFitApp {
     if (window.confetti) {
       window.confetti({ particleCount: 80, spread: 100, origin: { y: 0.6 } });
     }
+  }
+
+  deletePR(id) {
+    const pr = this.personalRecords.find(p => p.id === id);
+    const title = pr ? pr.title : 'שיא זה';
+    if (!confirm(`בטוחה שברצונך למחוק את "${title}" לצמיתות מלוח השיאים?`)) return;
+    this.personalRecords = this.personalRecords.filter(p => p.id !== id);
+    this.saveState();
+    this.closeModal();
+    this.render();
   }
 
   // Backup & Modal Control
