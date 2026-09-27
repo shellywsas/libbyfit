@@ -175,6 +175,11 @@ class LibiFitApp {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
     }
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(persistent => {
+        console.log('Persistent storage enabled:', persistent);
+      }).catch(err => console.log('Storage persist error:', err));
+    }
   }
 
   render() {
