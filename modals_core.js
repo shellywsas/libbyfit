@@ -86,6 +86,21 @@ function renderWorkoutFormModal() {
 
       <!-- If NOT planned: show full details builder -->
       ${!isPlanned ? `
+        <!-- Quick Template Loader for any sport -->
+        <div class="bg-sky-50/80 p-2.5 rounded-2xl border border-sky-200 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-sky-900">
+            <i data-lucide="clipboard-list" class="w-4 h-4 text-sky-600"></i>
+            <span>טעינה מתבנית קבועה:</span>
+          </div>
+          <select onchange="app.loadTemplateIntoCurrentWorkout(this.value)" class="p-1.5 rounded-xl border border-sky-200 text-xs font-bold text-sky-800 bg-white focus:outline-none flex-1 max-w-[210px]">
+            <option value="">בחרי תבנית מוכנה...</option>
+            ${app.templates.map(t => {
+              const sp = SPORT_CONFIGS[t.sport || 'gym']?.emoji || '📋';
+              return `<option value="${t.id}">${sp} ${t.name}</option>`;
+            }).join('')}
+          </select>
+        </div>
+
         <div>
           <label class="text-[11px] font-bold text-slate-600 mb-1 block">סוג האימון</label>
           <div class="grid grid-cols-3 gap-1.5">
@@ -269,6 +284,21 @@ function renderCompletePlannedModal() {
           <label class="font-bold text-slate-700 block text-[11px]">עד שעה:</label>
           <input type="time" id="c-end-time" value="${w.endTime || '19:30'}" class="w-full p-1.5 rounded-lg border border-slate-200 mt-1 font-bold text-center">
         </div>
+      </div>
+
+      <!-- Quick Template Loader for Completing -->
+      <div class="bg-emerald-50/80 p-2.5 rounded-2xl border border-emerald-200 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+          <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-600"></i>
+          <span>השלמה מתבנית קבועה:</span>
+        </div>
+        <select onchange="app.loadTemplateIntoCompleting(this.value)" class="p-1.5 rounded-xl border border-emerald-200 text-xs font-bold text-emerald-800 bg-white focus:outline-none flex-1 max-w-[210px]">
+          <option value="">בחרי תבנית מוכנה...</option>
+          ${app.templates.map(t => {
+            const sp = SPORT_CONFIGS[t.sport || 'gym']?.emoji || '📋';
+            return `<option value="${t.id}">${sp} ${t.name}</option>`;
+          }).join('')}
+        </select>
       </div>
 
       <div>

@@ -1,9 +1,11 @@
-// LibbyFit Data & Config
+// LibiFit Data & Config
 const DEFAULT_TEMPLATES = [
   {
     id: 'tmpl-1',
     name: 'רגליים וניתור לכדורעף',
-    category: 'כוח וניתור',
+    sport: 'gym',
+    category: 'חדר כושר',
+    color: '#2563EB',
     description: 'סקוואט, היפ טראסט וקפיצות פליאומטריות לשיפור הניתור והעוצמה במגרש',
     exercises: [
       { name: 'סקוואט עם מוט', isBodyweight: false, defaultSets: 4, defaultReps: 8, defaultWeight: 40 },
@@ -15,7 +17,9 @@ const DEFAULT_TEMPLATES = [
   {
     id: 'tmpl-2',
     name: 'פלג גוף עליון וליבה',
-    category: 'כוח עליון',
+    sport: 'gym',
+    category: 'חדר כושר',
+    color: '#2563EB',
     description: 'חיזוק כתפיים, גב, חזה ושרירי ליבה לשליטה בחבטות ובחסימות',
     exercises: [
       { name: 'מתח / מתח בגרביטון', isBodyweight: true, defaultSets: 3, defaultReps: 6, defaultWeight: 0 },
@@ -27,7 +31,9 @@ const DEFAULT_TEMPLATES = [
   {
     id: 'tmpl-3',
     name: 'אימון כוח כללי (Full Body)',
-    category: 'כללי',
+    sport: 'gym',
+    category: 'חדר כושר',
+    color: '#2563EB',
     description: 'אימון מאוזן לכל הגוף לשמירה על כושר וחוזק',
     exercises: [
       { name: 'סקוואט גובלט', isBodyweight: false, defaultSets: 3, defaultReps: 12, defaultWeight: 14 },
@@ -35,6 +41,69 @@ const DEFAULT_TEMPLATES = [
       { name: 'חתירה בדמבלים לגב', isBodyweight: false, defaultSets: 3, defaultReps: 10, defaultWeight: 10 },
       { name: 'הרמות רגליים לבטן', isBodyweight: true, defaultSets: 3, defaultReps: 15, defaultWeight: 0 }
     ]
+  },
+  {
+    id: 'tmpl-4',
+    name: 'אימון כדורעף - טכניקה וקבלות',
+    sport: 'volleyball',
+    category: 'כדורעף',
+    color: '#06B6D4',
+    partner: 'נועה, מאי',
+    description: 'קבלות תחתית, הנחתות מהירות, סרבים ותרגול הגנה קבוצתית',
+    notes: 'דגש על מעבר מהיר מהגנה להתקפה, עבודה על סרב קופץ יציב',
+    exercises: []
+  },
+  {
+    id: 'tmpl-5',
+    name: 'משחק כדורעף - 6 על 6',
+    sport: 'volleyball',
+    category: 'כדורעף',
+    color: '#06B6D4',
+    partner: 'שירה, עמית, דניאל',
+    description: 'משחק אימון מלא, טקטיקת חסימה ותיאום חבטות',
+    notes: 'משחק 3 מערכות מלאות',
+    exercises: []
+  },
+  {
+    id: 'tmpl-6',
+    name: 'בולדרינג אינטנסיבי',
+    sport: 'climbing',
+    category: 'טיפוס',
+    color: '#10B981',
+    description: 'פרויקטים ומסלולי בולדרינג, חיזוק אחיזות קרימפ ופלאש',
+    notes: 'חימום יסודי באצבעות, עבודה על זוויות חיוביות ושיפועים',
+    exercises: []
+  },
+  {
+    id: 'tmpl-7',
+    name: 'אימון טניס - סרבים ומשחק רשת',
+    sport: 'tennis',
+    category: 'טניס',
+    color: '#84CC16',
+    partner: 'עמית',
+    description: 'הגשות ראשונות ושניות, וולי ליד הרשת וחבטות כף יד עמוקות',
+    notes: 'עבודה על עבודת רגליים מהירה ותנועה לפינות המגרש',
+    exercises: []
+  },
+  {
+    id: 'tmpl-8',
+    name: 'ריצת אינטרוולים (הפוגות)',
+    sport: 'running',
+    category: 'ריצה',
+    color: '#8B5CF6',
+    description: 'אימון מהירות וסיבולת לב-ריאה לשיפור הזריזות במגרש',
+    notes: '10 דק חימום, 8 ספרינטים של 400 מ\' עם דקה מנוחה ביניהם, שחרור',
+    exercises: []
+  },
+  {
+    id: 'tmpl-9',
+    name: 'פילאטיס מזרן והתאוששות',
+    sport: 'pilates',
+    category: 'פילאטיס',
+    color: '#EC4899',
+    description: 'חיזוק שרירי ליבה עמוקים, גמישות ושחרור עומסים אחרי אימונים',
+    notes: 'דגש על נשימות, פתיחת בית חזה ומתיחות לשרירי הרגליים והגב',
+    exercises: []
   }
 ];
 

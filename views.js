@@ -1,28 +1,59 @@
-// Gym, Recovery and PR Views for LibbyFit
+// LibiFit Views (Templates, Recovery, PRs)
 
-// --- TAB 2: GYM & SAVED TEMPLATES ---
+// --- TAB 2: MULTI-SPORT SAVED TEMPLATES & REST TIMER ---
 function renderGymTab() {
+  const currentFilter = app.templateFilter || 'all';
+  const filterSports = [
+    { id: 'all', name: 'הכל', emoji: '✨' },
+    { id: 'volleyball', name: 'כדורעף', emoji: '🏐' },
+    { id: 'gym', name: 'חדר כושר', emoji: '🏋️‍♀️' },
+    { id: 'climbing', name: 'טיפוס', emoji: '🧗‍♀️' },
+    { id: 'tennis', name: 'טניס', emoji: '🎾' },
+    { id: 'running', name: 'ריצה', emoji: '🏃‍♀️' },
+    { id: 'pilates', name: 'פילאטיס', emoji: '🧘‍♀️' }
+  ];
+
+  const filtered = (currentFilter === 'all')
+    ? app.templates
+    : app.templates.filter(t => (t.sport === currentFilter) || (!t.sport && currentFilter === 'gym'));
+
   return `
-    <div class="space-y-4">
-      <div class="bg-gradient-to-r from-blue-600 to-brand-600 text-white rounded-2xl p-4 shadow-md flex justify-between items-center">
-        <div class="space-y-1">
+    <div class="space-y-3.5">
+      <div class="bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-500 text-white rounded-2xl p-4 shadow-md flex justify-between items-center">
+        <div class="space-y-0.5">
           <h3 class="font-bold text-base flex items-center gap-1.5">
-            🏋️‍♀️ אימוני כוח ותבניות
+            📋 תבניות אימון קבועות
           </h3>
-          <p class="text-xs text-blue-100">בחרי תבנית אימון קבועה בלחיצה אחת או צרי חדשה</p>
+          <p class="text-xs text-blue-100">אימונים מוכנים מראש לכל ענפי הספורט שלך בלחיצה אחת</p>
         </div>
-        <button onclick="app.openTemplateModal()" class="bg-white text-blue-700 font-bold px-3 py-1.5 rounded-xl text-xs shadow-sm hover:bg-blue-50 active:scale-95 transition">
+        <button onclick="app.openTemplateModal()" class="bg-white text-blue-700 font-bold px-3 py-1.5 rounded-xl text-xs shadow-sm hover:bg-blue-50 active:scale-95 transition whitespace-nowrap">
           + תבנית חדשה
         </button>
       </div>
 
+      <!-- Quick Sport Filter Pills -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        ${filterSports.map(s => {
+          const isActive = currentFilter === s.id;
+          return `
+            <button
+              onclick="app.setTemplateFilter('${s.id}')"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition active:scale-95 flex items-center gap-1 ${isActive ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
+              <span>${s.emoji}</span>
+              <span>${s.name}</span>
+            </button>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- Rest Timer -->
       <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm space-y-2">
         <div class="flex items-center justify-between text-xs font-bold text-slate-700">
           <span class="flex items-center gap-1">
             <i data-lucide="clock" class="w-4 h-4 text-brand-500"></i>
-            טיימר מנוחה בין סטים:
+            טיימר מנוחה בין סטים ומקצים:
           </span>
-          <span class="text-slate-400 font-normal">לחצי להפעלה מיידית</span>
+          <span class="text-slate-400 font-normal">לחצי להפעלה</span>
         </div>
         <div class="grid grid-cols-4 gap-2 text-xs font-bold">
           <button onclick="app.startRestTimer(30)" class="py-2 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 rounded-xl border border-slate-200 transition">30 שניות</button>
@@ -32,40 +63,78 @@ function renderGymTab() {
         </div>
       </div>
 
+      <!-- Templates List -->
       <div class="space-y-3">
-        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pr-1">תבניות אימון שמורות (${app.templates.length})</h4>
-        ${app.templates.map(tmpl => `
-          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3 hover:border-blue-200 transition">
-            <div class="flex items-start justify-between">
-              <div>
-                <span class="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md">${tmpl.category || 'חדר כושר'}</span>
-                <h4 class="font-bold text-sm text-slate-800 mt-1">${tmpl.name}</h4>
-                ${tmpl.description ? `<p class="text-xs text-slate-400 mt-0.5">${tmpl.description}</p>` : ''}
-              </div>
-              <div class="flex items-center gap-1">
-                <button onclick="app.deleteTemplate('${tmpl.id}')" class="text-slate-300 hover:text-red-500 p-1.5 rounded-lg" title="מחק תבנית">
+        <div class="flex items-center justify-between pr-1">
+          <h4 class="text-xs font-bold text-slate-500">תבניות שמורות (${filtered.length})</h4>
+          <span class="text-[11px] text-brand-600 font-medium">לחיצה מתחילה אימון מיד</span>
+        </div>
+
+        ${filtered.length === 0 ? `
+          <div class="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm space-y-2">
+            <span class="text-3xl">📝</span>
+            <p class="text-sm font-semibold text-slate-600">אין תבניות בקטגוריה זו</p>
+            <p class="text-xs text-slate-400">לחצי על "+ תבנית חדשה" כדי ליצור אימון קבוע בספורט זה!</p>
+          </div>
+        ` : filtered.map(tmpl => {
+          const spId = tmpl.sport || 'gym';
+          const cfg = SPORT_CONFIGS[spId] || SPORT_CONFIGS.other;
+          const tColor = tmpl.color || cfg.accentColor;
+
+          return `
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3 hover:border-slate-200 transition relative overflow-hidden">
+              <div class="absolute right-0 top-0 bottom-0 w-1.5" style="background-color: ${tColor};"></div>
+              
+              <div class="flex items-start justify-between pr-1">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-md text-white shadow-xs" style="background-color: ${tColor};">
+                      ${cfg.emoji} ${cfg.name}
+                    </span>
+                    <h4 class="font-bold text-sm text-slate-800">${tmpl.name}</h4>
+                  </div>
+                  ${tmpl.description ? `<p class="text-xs text-slate-500">${tmpl.description}</p>` : ''}
+                </div>
+                <button onclick="app.deleteTemplate('${tmpl.id}')" class="text-slate-300 hover:text-red-500 p-1.5 rounded-lg active:scale-90" title="מחק תבנית">
                   <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
               </div>
-            </div>
 
-            <div class="bg-slate-50 rounded-xl p-2.5 space-y-1.5 text-xs text-slate-600">
-              ${tmpl.exercises.map((ex, idx) => `
-                <div class="flex justify-between items-center text-[12px]">
-                  <span class="font-medium">${idx + 1}. ${ex.name}</span>
-                  <span class="text-slate-400 text-[11px]">
-                    ${ex.defaultSets} סטים × ${ex.defaultReps} חזרות ${ex.isBodyweight ? '(משקל גוף)' : (ex.defaultWeight ? `• ${ex.defaultWeight} ק"ג` : '')}
-                  </span>
+              ${tmpl.exercises && tmpl.exercises.length > 0 ? `
+                <div class="bg-slate-50 rounded-xl p-2.5 space-y-1.5 text-xs text-slate-600 pr-2">
+                  <span class="text-[10px] font-bold text-slate-400 block mb-1">תרגילי האימון:</span>
+                  ${tmpl.exercises.map((ex, idx) => `
+                    <div class="flex justify-between items-center text-[11px]">
+                      <span class="font-medium">${idx + 1}. ${ex.name}</span>
+                      <span class="text-slate-400 text-[10px]">
+                        ${ex.defaultSets} סטים × ${ex.defaultReps} חזרות ${ex.isBodyweight ? '(משקל גוף)' : (ex.defaultWeight ? `• ${ex.defaultWeight} ק"ג` : '')}
+                      </span>
+                    </div>
+                  `).join('')}
                 </div>
-              `).join('')}
-            </div>
+              ` : ''}
 
-            <button onclick="app.startWorkoutFromTemplate('${tmpl.id}')" class="w-full bg-gradient-to-r from-blue-600 to-brand-500 hover:from-blue-700 hover:to-brand-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition">
-              <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
-              התחילי אימון מתבנית זו
-            </button>
-          </div>
-        `).join('')}
+              ${tmpl.partner ? `
+                <div class="bg-cyan-50/70 border border-cyan-100 rounded-xl px-2.5 py-1.5 text-xs text-cyan-800 flex items-center gap-1.5">
+                  <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                  <span><b>שותפות קבועות:</b> ${tmpl.partner}</span>
+                </div>
+              ` : ''}
+
+              ${tmpl.notes ? `
+                <div class="bg-slate-50 rounded-xl px-2.5 py-1.5 text-xs text-slate-600 flex items-center gap-1.5">
+                  <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span class="truncate"><b>דגשים:</b> ${tmpl.notes}</span>
+                </div>
+              ` : ''}
+
+              <button onclick="app.startWorkoutFromTemplate('${tmpl.id}')" class="w-full text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition" style="background-color: ${tColor};">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                התחילי אימון מתבנית זו
+              </button>
+            </div>
+          `;
+        }).join('')}
       </div>
     </div>
   `;

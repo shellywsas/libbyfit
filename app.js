@@ -1,9 +1,10 @@
-// LibbyFit Main Application Controller
+// LibiFit Main Application Controller
 
-class LibbyFitApp {
+class LibiFitApp {
   constructor() {
     this.currentTab = 'calendar';
     this.calendarView = 'weekly';
+    this.templateFilter = 'all';
     this.currentDate = new Date();
     this.selectedDateStr = this.formatDate(new Date());
 
@@ -28,12 +29,17 @@ class LibbyFitApp {
     this.isWhatsApp = /WhatsApp/i.test(navigator.userAgent);
   }
 
+  setTemplateFilter(sportId) {
+    this.templateFilter = sportId || 'all';
+    this.render();
+  }
+
   loadState() {
     try {
-      this.workouts = JSON.parse(localStorage.getItem('libby_workouts')) || [];
-      this.templates = JSON.parse(localStorage.getItem('libby_templates')) || DEFAULT_TEMPLATES;
-      this.recoveryLogs = JSON.parse(localStorage.getItem('libby_recovery')) || {};
-      this.personalRecords = JSON.parse(localStorage.getItem('libby_prs')) || DEFAULT_PRS;
+      this.workouts = JSON.parse(localStorage.getItem('libi_workouts')) || JSON.parse(localStorage.getItem('libby_workouts')) || [];
+      this.templates = JSON.parse(localStorage.getItem('libi_templates')) || JSON.parse(localStorage.getItem('libby_templates')) || DEFAULT_TEMPLATES;
+      this.recoveryLogs = JSON.parse(localStorage.getItem('libi_recovery')) || JSON.parse(localStorage.getItem('libby_recovery')) || {};
+      this.personalRecords = JSON.parse(localStorage.getItem('libi_prs')) || JSON.parse(localStorage.getItem('libby_prs')) || DEFAULT_PRS;
     } catch (e) {
       console.error('Error loading state:', e);
       this.workouts = [];
@@ -45,10 +51,22 @@ class LibbyFitApp {
 
   saveState() {
     try {
-      localStorage.setItem('libby_workouts', JSON.stringify(this.workouts));
-      localStorage.setItem('libby_templates', JSON.stringify(this.templates));
-      localStorage.setItem('libby_recovery', JSON.stringify(this.recoveryLogs));
-      localStorage.setItem('libby_prs', JSON.stringify(this.personalRecords));
+      const wJson = JSON.stringify(this.workouts);
+      const tJson = JSON.stringify(this.templates);
+      const rJson = JSON.stringify(this.recoveryLogs);
+      const pJson = JSON.stringify(this.personalRecords);
+
+      // Save to primary Libi keys
+      localStorage.setItem('libi_workouts', wJson);
+      localStorage.setItem('libi_templates', tJson);
+      localStorage.setItem('libi_recovery', rJson);
+      localStorage.setItem('libi_prs', pJson);
+
+      // Also mirror to legacy keys for safety
+      localStorage.setItem('libby_workouts', wJson);
+      localStorage.setItem('libby_templates', tJson);
+      localStorage.setItem('libby_recovery', rJson);
+      localStorage.setItem('libby_prs', pJson);
     } catch (e) {
       console.error('Error saving state:', e);
       alert('שגיאה בשמירת הנתונים במכשיר!');
@@ -56,7 +74,7 @@ class LibbyFitApp {
   }
 
   loadTeammates() {
-    const fromStorage = localStorage.getItem('libby_teammates');
+    const fromStorage = localStorage.getItem('libi_teammates') || localStorage.getItem('libby_teammates');
     if (fromStorage) return JSON.parse(fromStorage);
     return ['נועה', 'מאי', 'שירה', 'עמית', 'דניאל', 'רוני'];
   }
@@ -67,7 +85,9 @@ class LibbyFitApp {
     if (!this.recentTeammates.includes(clean)) {
       this.recentTeammates.unshift(clean);
       if (this.recentTeammates.length > 15) this.recentTeammates.pop();
-      localStorage.setItem('libby_teammates', JSON.stringify(this.recentTeammates));
+      const tJson = JSON.stringify(this.recentTeammates);
+      localStorage.setItem('libi_teammates', tJson);
+      localStorage.setItem('libby_teammates', tJson);
     }
   }
 
@@ -197,11 +217,11 @@ class LibbyFitApp {
           <div class="flex items-center space-x-2 space-x-reverse">
             <!-- Custom Multi-Sport Logo Badge (Dumbbell, Volleyball, Tennis, Climbing) -->
             <div class="w-11 h-11 rounded-2xl overflow-hidden shadow-md border-2 border-white/40 flex-shrink-0 bg-white">
-              <img src="./app-logo.png" alt="LibbyFit Logo" class="w-full h-full object-cover">
+              <img src="./app-logo.png" alt="LibiFit Logo" class="w-full h-full object-cover">
             </div>
             <div>
               <h1 class="text-xl font-bold font-display tracking-tight flex items-center gap-1.5">
-                LibbyFit
+                LibiFit
                 <span class="text-xs bg-white/25 px-2 py-0.5 rounded-full font-normal">ליבי ✨</span>
               </h1>
               <p class="text-[11px] text-brand-100 font-medium">כדורעף • כושר • טניס • טיפוס</p>
@@ -248,7 +268,7 @@ class LibbyFitApp {
   renderBottomNav() {
     const tabs = [
       { id: 'calendar', label: 'יומן', icon: 'calendar-days' },
-      { id: 'gym', label: 'חדר כושר', icon: 'dumbbell' },
+      { id: 'gym', label: 'תבניות וכושר', icon: 'clipboard-list' },
       { id: 'recovery', label: 'מצב רוח וגוף', icon: 'activity' },
       { id: 'records', label: 'שיאים', icon: 'trophy' }
     ];
@@ -402,23 +422,39 @@ class LibbyFitApp {
     if (!tmpl) return;
 
     this.editingWorkout.title = tmpl.name;
-    this.editingWorkout.exercises = tmpl.exercises.map(ex => {
-      const sets = [];
-      const count = ex.defaultSets || 3;
-      for (let s = 1; s <= count; s++) {
-        sets.push({
-          setNum: s,
-          weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
-          reps: ex.defaultReps || 10,
-          done: false
-        });
-      }
-      return {
-        name: ex.name,
-        isBodyweight: !!ex.isBodyweight,
-        sets: sets
-      };
-    });
+    const sport = tmpl.sport || 'gym';
+    this.editingWorkout.type = sport;
+    const cfg = SPORT_CONFIGS[sport] || SPORT_CONFIGS.other;
+    this.editingWorkout.color = tmpl.color || cfg.accentColor;
+
+    if (tmpl.partner) {
+      this.editingWorkout.partner = tmpl.partner;
+    }
+    if (tmpl.notes || tmpl.description) {
+      this.editingWorkout.notes = tmpl.notes || tmpl.description;
+    }
+
+    if (tmpl.exercises && tmpl.exercises.length > 0) {
+      this.editingWorkout.exercises = tmpl.exercises.map(ex => {
+        const sets = [];
+        const count = ex.defaultSets || 3;
+        for (let s = 1; s <= count; s++) {
+          sets.push({
+            setNum: s,
+            weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
+            reps: ex.defaultReps || 10,
+            done: false
+          });
+        }
+        return {
+          name: ex.name,
+          isBodyweight: !!ex.isBodyweight,
+          sets: sets
+        };
+      });
+    } else if (sport !== 'gym') {
+      this.editingWorkout.exercises = [];
+    }
     this.render();
   }
 
@@ -540,22 +576,38 @@ class LibbyFitApp {
     if (!tmpl) return;
 
     this.completingWorkout.title = tmpl.name;
-    this.completingWorkout.exercises = tmpl.exercises.map(ex => {
-      const sets = [];
-      const count = ex.defaultSets || 3;
-      for (let s = 1; s <= count; s++) {
-        sets.push({
-          setNum: s,
-          weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
-          reps: ex.defaultReps || 10
-        });
-      }
-      return {
-        name: ex.name,
-        isBodyweight: !!ex.isBodyweight,
-        sets: sets
-      };
-    });
+    const sport = tmpl.sport || 'gym';
+    this.completingWorkout.type = sport;
+    const cfg = SPORT_CONFIGS[sport] || SPORT_CONFIGS.other;
+    this.completingWorkout.color = tmpl.color || cfg.accentColor;
+
+    if (tmpl.partner) {
+      this.completingWorkout.partner = tmpl.partner;
+    }
+    if (tmpl.notes || tmpl.description) {
+      this.completingWorkout.notes = tmpl.notes || tmpl.description;
+    }
+
+    if (tmpl.exercises && tmpl.exercises.length > 0) {
+      this.completingWorkout.exercises = tmpl.exercises.map(ex => {
+        const sets = [];
+        const count = ex.defaultSets || 3;
+        for (let s = 1; s <= count; s++) {
+          sets.push({
+            setNum: s,
+            weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
+            reps: ex.defaultReps || 10
+          });
+        }
+        return {
+          name: ex.name,
+          isBodyweight: !!ex.isBodyweight,
+          sets: sets
+        };
+      });
+    } else if (sport !== 'gym') {
+      this.completingWorkout.exercises = [];
+    }
     this.render();
   }
 
@@ -642,35 +694,81 @@ class LibbyFitApp {
   }
 
   // Template Methods
-  openTemplateModal() {
+  openTemplateModal(defaultSport) {
+    const sport = defaultSport || (this.templateFilter !== 'all' ? this.templateFilter : 'volleyball');
+    const cfg = SPORT_CONFIGS[sport] || SPORT_CONFIGS.gym;
+
     this.editingTemplate = {
       id: 'tmpl-' + Date.now(),
+      sport: sport,
+      category: cfg.name,
       name: '',
-      category: 'חדר כושר',
       description: '',
-      exercises: [
+      color: cfg.accentColor,
+      partner: '',
+      notes: '',
+      exercises: sport === 'gym' ? [
         { name: '', isBodyweight: false, defaultSets: 3, defaultReps: 10, defaultWeight: 20 }
-      ]
+      ] : []
     };
     this.openModal('templateForm');
+  }
+
+  changeTemplateSport(sportId) {
+    if (!this.editingTemplate) return;
+    this.editingTemplate.sport = sportId;
+    const cfg = SPORT_CONFIGS[sportId] || SPORT_CONFIGS.other;
+    this.editingTemplate.category = cfg.name;
+    this.editingTemplate.color = cfg.accentColor;
+
+    if (sportId === 'gym' && (!this.editingTemplate.exercises || this.editingTemplate.exercises.length === 0)) {
+      this.editingTemplate.exercises = [
+        { name: '', isBodyweight: false, defaultSets: 3, defaultReps: 10, defaultWeight: 20 }
+      ];
+    }
+    this.render();
+  }
+
+  setTemplateColor(hex) {
+    if (!this.editingTemplate) return;
+    this.editingTemplate.color = hex;
+    this.render();
+  }
+
+  addTeammateToTmplInput(name) {
+    const input = document.getElementById('tmpl-partner');
+    if (!input) return;
+    const current = input.value.trim();
+    if (!current) {
+      input.value = name;
+    } else if (!current.includes(name)) {
+      input.value = current + ', ' + name;
+    }
+    if (this.editingTemplate) {
+      this.editingTemplate.partner = input.value;
+    }
   }
 
   startWorkoutFromTemplate(tmplId) {
     const tmpl = this.templates.find(t => t.id === tmplId);
     if (!tmpl) return;
 
+    const sport = tmpl.sport || 'gym';
+    const cfg = SPORT_CONFIGS[sport] || SPORT_CONFIGS.other;
+
     const newWorkout = {
       id: 'w-' + Date.now(),
-      date: this.formatDate(new Date()),
+      date: this.selectedDateStr || this.formatDate(new Date()),
       startTime: '18:00',
       endTime: '19:30',
-      type: 'gym',
+      type: sport,
       title: tmpl.name,
-      notes: '',
-      partner: '',
+      color: tmpl.color || cfg.accentColor,
+      notes: tmpl.notes || tmpl.description || '',
+      partner: tmpl.partner || '',
       videoUrl: '',
       isPlanned: false,
-      exercises: tmpl.exercises.map(ex => {
+      exercises: (tmpl.exercises && tmpl.exercises.length > 0) ? tmpl.exercises.map(ex => {
         const sets = [];
         const count = ex.defaultSets || 3;
         for (let s = 1; s <= count; s++) {
@@ -686,7 +784,7 @@ class LibbyFitApp {
           isBodyweight: !!ex.isBodyweight,
           sets: sets
         };
-      })
+      }) : []
     };
 
     this.editingWorkout = newWorkout;
@@ -694,6 +792,7 @@ class LibbyFitApp {
   }
 
   addExerciseToTemplate() {
+    if (!this.editingTemplate.exercises) this.editingTemplate.exercises = [];
     this.editingTemplate.exercises.push({
       name: '',
       isBodyweight: false,
@@ -724,12 +823,18 @@ class LibbyFitApp {
 
   saveTemplateFromForm() {
     const tmpl = this.editingTemplate;
-    tmpl.name = document.getElementById('tmpl-name').value.trim();
-    tmpl.description = document.getElementById('tmpl-desc').value.trim();
+    tmpl.name = document.getElementById('tmpl-name')?.value.trim() || '';
+    tmpl.description = document.getElementById('tmpl-desc')?.value.trim() || '';
+    tmpl.partner = document.getElementById('tmpl-partner')?.value.trim() || '';
+    tmpl.notes = document.getElementById('tmpl-notes')?.value.trim() || '';
 
     if (!tmpl.name) {
       alert('נא להזין שם לתבנית');
       return;
+    }
+
+    if (tmpl.partner) {
+      tmpl.partner.split(',').forEach(p => this.saveTeammate(p.trim()));
     }
 
     this.templates.unshift(tmpl);
@@ -1011,7 +1116,7 @@ class LibbyFitApp {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `libbyfit_backup_${this.formatDate(new Date())}.json`;
+    a.download = `libifit_backup_${this.formatDate(new Date())}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -1088,7 +1193,9 @@ window.addEventListener('appinstalled', () => {
   }
 });
 
-window.app = new LibbyFitApp();
+window.LibiFitApp = LibiFitApp;
+window.LibbyFitApp = LibiFitApp;
+window.app = new LibiFitApp();
 document.addEventListener('DOMContentLoaded', () => {
   window.app.init();
 });

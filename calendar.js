@@ -1,4 +1,4 @@
-// Calendar Views & Logic for LibbyFit
+// Calendar Views & Logic for LibiFit
 
 function renderCalendarTab() {
   return `

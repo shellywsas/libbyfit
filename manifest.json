@@ -1,7 +1,7 @@
 {
-  "name": "LibbyFit - יומן אימונים",
-  "short_name": "LibbyFit",
-  "id": "libbyfit-app",
+  "name": "LibiFit - יומן אימונים",
+  "short_name": "LibiFit",
+  "id": "libifit-app",
   "description": "אפליקציית מעקב אימונים אישית לליבי - כדורעף, חדר כושר, טניס, טיפוס והתאוששות",
   "start_url": "./index.html",
   "scope": "./",

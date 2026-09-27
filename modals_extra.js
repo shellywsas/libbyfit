@@ -120,11 +120,18 @@ function renderWorkoutDetailModal() {
 
 function renderTemplateFormModal() {
   const tmpl = app.editingTemplate;
+  const currentSport = tmpl.sport || 'gym';
+  const isGym = currentSport === 'gym';
+  const isVolleyball = currentSport === 'volleyball';
+  const isTennis = currentSport === 'tennis';
+  const isPartnerSport = isVolleyball || isTennis;
+  const cfg = SPORT_CONFIGS[currentSport] || SPORT_CONFIGS.other;
+  const tColor = tmpl.color || cfg.accentColor;
 
   return `
-    <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-blue-50">
-      <h3 class="font-bold text-sm text-blue-900 flex items-center gap-1.5">
-        <span>📋 יצירת תבנית אימון קבועה</span>
+    <div class="p-4 border-b border-slate-100 flex items-center justify-between" style="background-color: ${tColor}18;">
+      <h3 class="font-bold text-sm flex items-center gap-1.5" style="color: ${tColor};">
+        <span>📋 יצירת תבנית אימון קבועה (${cfg.emoji} ${cfg.name})</span>
       </h3>
       <button onclick="app.closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
         <i data-lucide="x" class="w-5 h-5"></i>
@@ -132,59 +139,124 @@ function renderTemplateFormModal() {
     </div>
 
     <div class="p-4 overflow-y-auto space-y-3 flex-1 text-xs">
+      <!-- Sport Selector -->
       <div>
-        <label class="font-bold text-slate-700 block mb-1">שם התבנית (למשל: אימון רגליים וניתור)</label>
-        <input type="text" id="tmpl-name" value="${tmpl.name}" placeholder="שם האימון..." class="w-full p-2 rounded-xl border border-slate-200">
-      </div>
-
-      <div>
-        <label class="font-bold text-slate-700 block mb-1">תיאור קצר או מטרה</label>
-        <input type="text" id="tmpl-desc" value="${tmpl.description}" placeholder="למשל: חיזוק ניתור והנחתות..." class="w-full p-2 rounded-xl border border-slate-200">
-      </div>
-
-      <div class="space-y-2 pt-2 border-t border-slate-100">
-        <div class="flex justify-between items-center">
-          <span class="font-bold text-slate-800">תרגילים מוגדרים מראש:</span>
-          <button type="button" onclick="app.addExerciseToTemplate()" class="text-[11px] bg-blue-50 text-blue-600 font-bold px-2 py-1 rounded-lg hover:bg-blue-100">
-            + תרגיל נוסף
-          </button>
+        <label class="font-bold text-slate-700 block mb-1">סוג הספורט עבור התבנית:</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          ${Object.values(SPORT_CONFIGS).filter(c => c.id !== 'planned').map(c => `
+            <button
+              type="button"
+              onclick="app.changeTemplateSport('${c.id}')"
+              class="p-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition ${currentSport === c.id ? 'shadow-xs ring-2 ring-brand-500 bg-brand-50 text-brand-700' : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50'}">
+              <span class="text-base">${c.emoji}</span>
+              <span>${c.name}</span>
+            </button>
+          `).join('')}
         </div>
-
-        ${tmpl.exercises.map((ex, exIdx) => `
-          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <input type="text" value="${ex.name}" onchange="app.updateTmplExName(${exIdx}, this.value)" placeholder="שם התרגיל" class="p-1.5 rounded-lg border border-slate-200 flex-1 font-bold">
-              <label class="text-[10px] text-slate-500 flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" ${ex.isBodyweight ? 'checked' : ''} onchange="app.toggleTmplExBodyweight(${exIdx}, this.checked)">
-                משקל גוף
-              </label>
-              <button type="button" onclick="app.removeExerciseFromTemplate(${exIdx})" class="text-slate-300 hover:text-red-500">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2 text-[10px]">
-              <div>
-                <span class="text-slate-400 block">מס' סטים</span>
-                <input type="number" value="${ex.defaultSets}" onchange="app.updateTmplExField(${exIdx}, 'defaultSets', this.value)" class="w-full p-1 rounded border border-slate-200 text-center">
-              </div>
-              <div>
-                <span class="text-slate-400 block">חזרות לסט</span>
-                <input type="number" value="${ex.defaultReps}" onchange="app.updateTmplExField(${exIdx}, 'defaultReps', this.value)" class="w-full p-1 rounded border border-slate-200 text-center">
-              </div>
-              <div>
-                <span class="text-slate-400 block">משקל יעד (ק"ג)</span>
-                <input type="number" ${ex.isBodyweight ? 'disabled placeholder="-"' : `value="${ex.defaultWeight}"`} onchange="app.updateTmplExField(${exIdx}, 'defaultWeight', this.value)" class="w-full p-1 rounded border border-slate-200 text-center ${ex.isBodyweight ? 'bg-slate-200 text-slate-400' : ''}">
-              </div>
-            </div>
-          </div>
-        `).join('')}
       </div>
+
+      <!-- Color Selector -->
+      <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-[11px] font-bold text-slate-700">🎨 צבע התבנית ביומן:</label>
+          <span class="text-[10px] text-slate-400">לבחירה מהירה</span>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          ${WORKOUT_COLORS.map(c => {
+            const isSelected = tColor === c.hex;
+            return `
+              <button
+                type="button"
+                onclick="app.setTemplateColor('${c.hex}')"
+                class="w-6 h-6 rounded-full transition-all active:scale-90 flex items-center justify-center ${isSelected ? 'ring-2 ring-brand-500 scale-110 shadow-sm' : ''}"
+                style="background-color: ${c.hex};"
+                title="${c.name}">
+                ${isSelected ? '<i data-lucide="check" class="w-3 h-3 text-white stroke-[3]"></i>' : ''}
+              </button>
+            `;
+          }).join('')}
+          <label class="w-6 h-6 rounded-full border border-dashed border-slate-300 flex items-center justify-center cursor-pointer relative bg-white" title="בחירת צבע אישי">
+            <input type="color" value="${tColor}" onchange="app.setTemplateColor(this.value)" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer">
+            <i data-lucide="palette" class="w-3 h-3 text-slate-400"></i>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">שם התבנית (למשל: אימון רגליים וניתור / משחק זוגות)</label>
+        <input type="text" id="tmpl-name" value="${tmpl.name || ''}" placeholder="שם האימון..." class="w-full p-2 rounded-xl border border-slate-200 font-bold">
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">תיאור קצר או מטרת התבנית</label>
+        <input type="text" id="tmpl-desc" value="${tmpl.description || ''}" placeholder="למשל: חיזוק ניתור, אימון סרבים, בולדרים בדירוג V4..." class="w-full p-2 rounded-xl border border-slate-200">
+      </div>
+
+      ${isPartnerSport ? `
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">שותפות קבועות / הרכב (אופציונלי):</label>
+          <input type="text" id="tmpl-partner" value="${tmpl.partner || ''}" placeholder="למשל: נועה, מאי, שירה" class="w-full p-2 rounded-xl border border-slate-200">
+          <div class="flex flex-wrap gap-1 mt-1.5">
+            <span class="text-[10px] text-slate-400 self-center">מהיר:</span>
+            ${(app.recentTeammates || []).slice(0, 5).map(name => `
+              <button type="button" onclick="app.addTeammateToTmplInput('${name}')" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full transition">
+                + ${name}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">דגשים, תרגילים ומבנה האימון (הערות קבועות):</label>
+        <textarea id="tmpl-notes" rows="2.5" placeholder="דגשים קבועים לאימון זה..." class="w-full p-2 rounded-xl border border-slate-200">${tmpl.notes || ''}</textarea>
+      </div>
+
+      ${isGym ? `
+        <div class="space-y-2 pt-2 border-t border-slate-100">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-800">תרגילי חדר כושר מוגדרים מראש:</span>
+            <button type="button" onclick="app.addExerciseToTemplate()" class="text-[11px] bg-blue-50 text-blue-600 font-bold px-2 py-1 rounded-lg hover:bg-blue-100">
+              + תרגיל נוסף
+            </button>
+          </div>
+
+          ${(tmpl.exercises || []).map((ex, exIdx) => `
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <input type="text" value="${ex.name}" onchange="app.updateTmplExName(${exIdx}, this.value)" placeholder="שם התרגיל" class="p-1.5 rounded-lg border border-slate-200 flex-1 font-bold">
+                <label class="text-[10px] text-slate-500 flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" ${ex.isBodyweight ? 'checked' : ''} onchange="app.toggleTmplExBodyweight(${exIdx}, this.checked)">
+                  משקל גוף
+                </label>
+                <button type="button" onclick="app.removeExerciseFromTemplate(${exIdx})" class="text-slate-300 hover:text-red-500">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 text-[10px]">
+                <div>
+                  <span class="text-slate-400 block">מס' סטים</span>
+                  <input type="number" value="${ex.defaultSets || 3}" onchange="app.updateTmplExField(${exIdx}, 'defaultSets', this.value)" class="w-full p-1 rounded border border-slate-200 text-center">
+                </div>
+                <div>
+                  <span class="text-slate-400 block">חזרות לסט</span>
+                  <input type="number" value="${ex.defaultReps || 10}" onchange="app.updateTmplExField(${exIdx}, 'defaultReps', this.value)" class="w-full p-1 rounded border border-slate-200 text-center">
+                </div>
+                <div>
+                  <span class="text-slate-400 block">משקל יעד (ק"ג)</span>
+                  <input type="number" ${ex.isBodyweight ? 'disabled placeholder="-"' : `value="${ex.defaultWeight || ''}"`} onchange="app.updateTmplExField(${exIdx}, 'defaultWeight', this.value)" class="w-full p-1 rounded border border-slate-200 text-center ${ex.isBodyweight ? 'bg-slate-200 text-slate-400' : ''}">
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
     </div>
 
     <div class="p-3 border-t border-slate-100 flex gap-2 bg-slate-50">
       <button onclick="app.closeModal()" class="flex-1 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-xl">ביטול</button>
-      <button onclick="app.saveTemplateFromForm()" class="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow">שמירת תבנית ✨</button>
+      <button onclick="app.saveTemplateFromForm()" class="flex-2 bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow">שמירת תבנית ✨</button>
     </div>
   `;
 }
@@ -298,7 +370,7 @@ function renderBackupModal() {
           <li>פתחי את האתר בדפדפן <strong>Chrome</strong> בטלפון שלך.</li>
           <li>לחצי על <strong>שלוש הנקודות (⋮)</strong> בפינה למעלה.</li>
           <li>בחרי באפשרות <strong>"הוסף למסך הבית"</strong> (או "התקן אפליקציה").</li>
-          <li>זהו! LibbyFit תופיע כאפליקציה רגילה עם האייקון שלך במסך הבית 🏐🏋️‍♀️🎾🧗‍♀️</li>
+          <li>זהו! LibiFit תופיע כאפליקציה רגילה עם האייקון שלך במסך הבית 🏐🏋️‍♀️🎾🧗‍♀️</li>
         </ol>
       </div>
 
@@ -341,10 +413,10 @@ function renderInstallGuideModal() {
     <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-l from-brand-600 via-sky-500 to-cyan-500 text-white">
       <div class="flex items-center gap-2.5">
         <div class="w-10 h-10 rounded-xl bg-white/20 p-1 flex items-center justify-center border border-white/30 shadow-inner">
-          <img src="./app-logo.png" alt="LibbyFit" class="w-full h-full object-contain drop-shadow">
+          <img src="./app-logo.png" alt="LibiFit" class="w-full h-full object-contain drop-shadow">
         </div>
         <div>
-          <h3 class="font-bold text-sm font-display">התקנת LibbyFit בטלפון</h3>
+          <h3 class="font-bold text-sm font-display">התקנת LibiFit בטלפון</h3>
           <p class="text-[11px] text-brand-100">אפליקציה מלאה במסך הבית ✨</p>
         </div>
       </div>
@@ -358,7 +430,7 @@ function renderInstallGuideModal() {
         <div class="w-16 h-16 mx-auto rounded-2xl overflow-hidden shadow-md border-2 border-white">
           <img src="./app-logo.png" alt="Logo" class="w-full h-full object-cover">
         </div>
-        <h4 class="font-bold text-sm text-brand-900">LibbyFit - יומן האימונים של ליבי</h4>
+        <h4 class="font-bold text-sm text-brand-900">LibiFit - יומן האימונים של ליבי</h4>
         <p class="text-[11px] text-brand-700">עובד חלק כמו אפליקציה מחנות האפליקציות, שומר נתונים ועובד גם ללא קליטה!</p>
       </div>
 
