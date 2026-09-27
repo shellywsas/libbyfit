@@ -198,6 +198,15 @@ class LibiFitApp {
         console.log('Persistent storage enabled:', persistent);
       }).catch(err => console.log('Storage persist error:', err));
     }
+
+    // First time entry check: show registration or login screen
+    const hasPrompted = localStorage.getItem('libi_auth_welcomed');
+    const isLoggedIn = window.firebaseService && window.firebaseService.isLoggedIn();
+    if (!isLoggedIn && !hasPrompted) {
+      localStorage.setItem('libi_auth_welcomed', 'true');
+      this.authTab = 'register';
+      this.openModal('authModal');
+    }
   }
 
   render() {
@@ -1167,13 +1176,27 @@ class LibiFitApp {
     this.openModal('prForm');
   }
 
+  handlePRUnitChange(val) {
+    const box = document.getElementById('custom-unit-box');
+    if (box) {
+      if (val === 'custom') {
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+  }
+
   saveNewPR() {
     const title = document.getElementById('new-pr-title').value.trim();
-    const unit = document.getElementById('new-pr-unit').value;
-    const val = parseFloat(document.getElementById('new-pr-val').value) || 0;
+    const unitSelect = document.getElementById('new-pr-unit').value;
+    const customUnit = document.getElementById('new-pr-custom-unit')?.value.trim();
+    const unit = (unitSelect === 'custom' && customUnit) ? customUnit : (unitSelect === 'custom' ? 'יח׳' : unitSelect);
+    const category = document.getElementById('new-pr-category')?.value || 'אירובי וריצה';
+    const val = parseFloat(document.getElementById('new-pr-val').value);
     const note = document.getElementById('new-pr-note').value.trim();
 
-    if (!title || !val) {
+    if (!title || isNaN(val) || val <= 0) {
       alert('נא להזין שם וערך שיא תקינים');
       return;
     }
@@ -1182,7 +1205,7 @@ class LibiFitApp {
     const newRecord = {
       id: 'pr-' + Date.now(),
       title: title,
-      category: 'מותאם אישית',
+      category: category,
       unit: unit,
       currentPR: val,
       history: [

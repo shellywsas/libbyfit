@@ -162,6 +162,28 @@ const DEFAULT_PRS = [
       { date: '2026-06-10', value: 47, note: 'מדידה בתחילת עונה' },
       { date: '2026-09-01', value: 52, note: 'שיפור ניכר בזכות הפליאומטריה' }
     ]
+  },
+  {
+    id: 'pr-6',
+    title: 'ריצת מרחק רציפה',
+    category: 'אירובי וריצה',
+    unit: 'ק"מ',
+    currentPR: 10,
+    history: [
+      { date: '2026-08-12', value: 7.5, note: 'קצב קל בפארק' },
+      { date: '2026-09-18', value: 10, note: '10 קילומטרים ראשונים!' }
+    ]
+  },
+  {
+    id: 'pr-7',
+    title: 'ספרינט מהיר',
+    category: 'אירובי וריצה',
+    unit: 'מטרים',
+    currentPR: 400,
+    history: [
+      { date: '2026-08-20', value: 200, note: 'אינטרוולים' },
+      { date: '2026-09-10', value: 400, note: 'ספרינט מלא' }
+    ]
   }
 ];
 

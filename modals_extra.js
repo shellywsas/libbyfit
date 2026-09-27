@@ -293,32 +293,53 @@ function renderPRFormModal() {
       </button>
     </div>
 
-    <div class="p-4 space-y-3 text-xs">
+    <div class="p-4 space-y-3.5 text-xs">
       <div>
-        <label class="font-bold text-slate-700 block mb-1">שם התרגיל או השיא (למשל: סקוואט / ניתור אנכי)</label>
-        <input type="text" id="new-pr-title" placeholder="למשל: היפ טראסט" class="w-full p-2 rounded-xl border border-slate-200 font-bold">
+        <label class="font-bold text-slate-700 block mb-1">שם התרגיל או השיא (למשל: סקוואט / ריצת 5 ק"מ / ניתור)</label>
+        <input type="text" id="new-pr-title" placeholder="למשל: ריצת 5 ק&quot;מ, סקוואט, שחייה 100 מטר..." class="w-full p-2.5 rounded-xl border border-slate-200 font-bold focus:border-amber-500 focus:outline-none">
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="font-bold text-slate-700 block mb-1">יחידת מידה</label>
-          <select id="new-pr-unit" class="w-full p-2 rounded-xl border border-slate-200">
-            <option value='ק"ג'>ק"ג</option>
-            <option value="חזרות">חזרות</option>
-            <option value='ס"מ'>ס"מ</option>
-            <option value="שניות">שניות</option>
-            <option value="דקות">דקות</option>
+          <label class="font-bold text-slate-700 block mb-1">תחום / קטגוריה</label>
+          <select id="new-pr-category" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-500 focus:outline-none">
+            <option value="אירובי וריצה">אירובי וריצה 🏃‍♀️</option>
+            <option value="חדר כושר">חדר כושר 💪</option>
+            <option value="כדורעף">כדורעף 🏐</option>
+            <option value="משקל גוף">משקל גוף 🤸‍♀️</option>
+            <option value="שחייה">שחייה 🏊‍♀️</option>
+            <option value="כללי">כללי / אחר ⭐</option>
           </select>
         </div>
         <div>
-          <label class="font-bold text-slate-700 block mb-1">ערך השיא הנוכחי</label>
-          <input type="number" step="0.5" id="new-pr-val" placeholder="50" class="w-full p-2 rounded-xl border border-slate-200 font-bold">
+          <label class="font-bold text-slate-700 block mb-1">יחידת מידה</label>
+          <select id="new-pr-unit" onchange="app.handlePRUnitChange(this.value)" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:border-amber-500 focus:outline-none">
+            <option value='ק"מ'>ק"מ (קילומטרים) 🏃‍♀️</option>
+            <option value="מטרים">מטרים 📏</option>
+            <option value='ק"ג'>ק"ג (משקל) 🏋️‍♀️</option>
+            <option value="חזרות">חזרות 🔢</option>
+            <option value="שניות">שניות ⏱️</option>
+            <option value="דקות">דקות ⏳</option>
+            <option value='ס"מ'>ס"מ (ניתור / גובה) 🏐</option>
+            <option value='קמ"ש'>קמ"ש (מהירות) ⚡</option>
+            <option value="custom">אחר (הקלדה חופשית)... ✏️</option>
+          </select>
         </div>
+      </div>
+
+      <div id="custom-unit-box" class="hidden">
+        <label class="font-bold text-slate-700 block mb-1">יחידת מידה מותאמת אישית:</label>
+        <input type="text" id="new-pr-custom-unit" placeholder="למשל: בריכות, צעדים, וואט..." class="w-full p-2 rounded-xl border border-slate-200 text-xs focus:border-amber-500 focus:outline-none font-medium">
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">ערך השיא הנוכחי</label>
+        <input type="number" step="any" id="new-pr-val" placeholder="למשל: 5, 10.5, 50, 400" class="w-full p-2.5 rounded-xl border border-slate-200 font-extrabold text-base text-amber-600 focus:border-amber-500 focus:outline-none">
       </div>
 
       <div>
         <label class="font-bold text-slate-700 block mb-1">הערה לשיא (אופציונלי)</label>
-        <input type="text" id="new-pr-note" placeholder="למשל: עלה קל, 3 חזרות" class="w-full p-2 rounded-xl border border-slate-200">
+        <input type="text" id="new-pr-note" placeholder="למשל: קצב שיא, עלה חלק, שיפור ענק!" class="w-full p-2 rounded-xl border border-slate-200 focus:border-amber-500 focus:outline-none">
       </div>
     </div>
 
@@ -349,12 +370,12 @@ function renderUpdatePRModal() {
 
       <div>
         <label class="font-bold text-slate-700 block mb-1">השיא החדש שלך! (${pr.unit})</label>
-        <input type="number" step="0.5" id="update-pr-val" placeholder="${pr.currentPR + 2.5}" class="w-full p-2.5 rounded-xl border border-slate-200 text-center font-extrabold text-lg text-amber-600">
+        <input type="number" step="any" id="update-pr-val" placeholder="${pr.currentPR}" class="w-full p-2.5 rounded-xl border border-slate-200 text-center font-extrabold text-lg text-amber-600 focus:border-amber-500 focus:outline-none">
       </div>
 
       <div>
         <label class="font-bold text-slate-700 block mb-1">הערה / דגש לשבירת השיא</label>
-        <input type="text" id="update-pr-note" placeholder="למשל: סקוואט עמוק, הרגיש מדהים!" class="w-full p-2 rounded-xl border border-slate-200">
+        <input type="text" id="update-pr-note" placeholder="למשל: שיפור מטורף, הרגיש מדהים!" class="w-full p-2 rounded-xl border border-slate-200 focus:border-amber-500 focus:outline-none">
       </div>
     </div>
 
@@ -612,6 +633,17 @@ function renderAuthModal() {
           </button>
         </div>
       ` : `
+        <!-- WELCOME BANNER ON FIRST VISIT / NOT LOGGED IN -->
+        <div class="bg-gradient-to-l from-brand-600 via-sky-500 to-cyan-500 text-white p-3.5 rounded-2xl shadow-sm space-y-1">
+          <div class="flex items-center gap-1.5 font-bold text-xs">
+            <span class="text-base">👋</span>
+            <span>ברוכה הבאה ל-LibiFit!</span>
+          </div>
+          <p class="text-[11px] text-brand-50 leading-relaxed font-medium">
+            הירשמי או התחברי עם <b>שם משתמש וסיסמה</b> (בלי אימייל) כדי לשמור את כל האימונים שלך בענן ולסנכרן בין כל המכשירים!
+          </p>
+        </div>
+
         <!-- NOT LOGGED IN: TABS -->
         <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold">
           <button
