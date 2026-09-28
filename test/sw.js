@@ -1,4 +1,4 @@
-const CACHE_NAME = 'libifit-test-v5';
+const CACHE_NAME = 'libifit-test-v6';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

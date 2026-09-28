@@ -59,7 +59,7 @@ function renderWorkoutFormModal() {
       <div class="space-y-2">
         <div>
           <label class="text-[11px] font-bold text-slate-600">תאריך האימון</label>
-          <input type="date" id="w-date" value="${w.date}" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 font-semibold">
+          <input type="date" id="w-date" value="${w.date}" onchange="if(app.editingWorkout) app.editingWorkout.date = this.value" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 font-semibold">
         </div>
 
         <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -68,14 +68,14 @@ function renderWorkoutFormModal() {
               <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-500"></i>
               <span>משעה:</span>
             </label>
-            <input type="time" id="w-start-time" value="${w.startTime || '18:00'}" class="w-full text-xs p-1.5 rounded-lg border border-slate-200 mt-1 text-center font-bold">
+            <input type="time" id="w-start-time" value="${w.startTime || '18:00'}" onchange="if(app.editingWorkout) app.editingWorkout.startTime = this.value" class="w-full text-xs p-1.5 rounded-lg border border-slate-200 mt-1 text-center font-bold">
           </div>
           <div>
             <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
               <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-500"></i>
               <span>עד שעה:</span>
             </label>
-            <input type="time" id="w-end-time" value="${w.endTime || '19:30'}" class="w-full text-xs p-1.5 rounded-lg border border-slate-200 mt-1 text-center font-bold">
+            <input type="time" id="w-end-time" value="${w.endTime || '19:30'}" onchange="if(app.editingWorkout) app.editingWorkout.endTime = this.value" class="w-full text-xs p-1.5 rounded-lg border border-slate-200 mt-1 text-center font-bold">
           </div>
         </div>
       </div>
@@ -83,7 +83,7 @@ function renderWorkoutFormModal() {
       <!-- Title / Goal -->
       <div>
         <label class="text-[11px] font-bold text-slate-600">כותרת או יעד לאימון</label>
-        <input type="text" id="w-title" value="${w.title || ''}" placeholder="${isPlanned ? 'אימון מתוכנן' : 'אימון...'}" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 font-bold">
+        <input type="text" id="w-title" value="${w.title || ''}" oninput="if(app.editingWorkout) app.editingWorkout.title = this.value" placeholder="${isPlanned ? 'אימון מתוכנן' : 'אימון...'}" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 font-bold">
       </div>
 
       <!-- Quick Template Loader for any sport -->
@@ -160,7 +160,7 @@ function renderWorkoutFormModal() {
             
             <div>
               <label class="text-[11px] font-bold text-slate-600">עם מי שיחקת? (שותפות/חברות)</label>
-              <input type="text" id="w-partner" value="${w.partner || ''}" placeholder="למשל: נועה, מאי, שירה" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 bg-white">
+              <input type="text" id="w-partner" value="${w.partner || ''}" oninput="if(app.editingWorkout) app.editingWorkout.partner = this.value" placeholder="למשל: נועה, מאי, שירה" class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1 bg-white">
               <div class="flex flex-wrap gap-1 mt-1.5">
                 <span class="text-[10px] text-slate-400 self-center">מהיר:</span>
                 ${app.recentTeammates.map(name => `
@@ -275,7 +275,7 @@ function renderWorkoutFormModal() {
 
       <div>
         <label class="text-[11px] font-bold text-slate-600">הערות ודגשים</label>
-        <textarea id="w-notes" rows="2" placeholder="דגשים לאימון..." class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1">${w.notes || ''}</textarea>
+        <textarea id="w-notes" rows="2" oninput="if(app.editingWorkout) app.editingWorkout.notes = this.value" placeholder="דגשים לאימון..." class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1">${w.notes || ''}</textarea>
       </div>
     </div>
 
@@ -322,11 +322,11 @@ function renderCompletePlannedModal() {
       <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
         <div>
           <label class="font-bold text-slate-700 block text-[11px]">משעה:</label>
-          <input type="time" id="c-start-time" value="${w.startTime || '18:00'}" class="w-full p-1.5 rounded-lg border border-slate-200 mt-1 font-bold text-center">
+          <input type="time" id="c-start-time" value="${w.startTime || '18:00'}" onchange="if(app.completingWorkout) app.completingWorkout.startTime = this.value" class="w-full p-1.5 rounded-lg border border-slate-200 mt-1 font-bold text-center">
         </div>
         <div>
           <label class="font-bold text-slate-700 block text-[11px]">עד שעה:</label>
-          <input type="time" id="c-end-time" value="${w.endTime || '19:30'}" class="w-full p-1.5 rounded-lg border border-slate-200 mt-1 font-bold text-center">
+          <input type="time" id="c-end-time" value="${w.endTime || '19:30'}" onchange="if(app.completingWorkout) app.completingWorkout.endTime = this.value" class="w-full p-1.5 rounded-lg border border-slate-200 mt-1 font-bold text-center">
         </div>
       </div>
 
@@ -389,7 +389,7 @@ function renderCompletePlannedModal() {
 
       <div>
         <label class="font-bold text-slate-700 block mb-1">כותרת האימון</label>
-        <input type="text" id="c-title" value="${w.title && w.title !== 'אימון מתוכנן' ? w.title : SPORT_CONFIGS[w.type]?.name || 'אימון'}" class="w-full p-2 rounded-xl border border-slate-200 font-bold">
+        <input type="text" id="c-title" value="${w.title && w.title !== 'אימון מתוכנן' ? w.title : SPORT_CONFIGS[w.type]?.name || 'אימון'}" oninput="if(app.completingWorkout) app.completingWorkout.title = this.value" class="w-full p-2 rounded-xl border border-slate-200 font-bold">
       </div>
 
       ${isGym ? `
@@ -446,7 +446,7 @@ function renderCompletePlannedModal() {
         <div class="bg-cyan-50/70 border border-cyan-200 p-3 rounded-2xl space-y-3">
           <div>
             <label class="font-bold text-slate-600 block mb-1">עם מי שיחקת?</label>
-            <input type="text" id="c-partner" value="${w.partner || ''}" placeholder="נועה, מאי, שירה..." class="w-full p-2 rounded-xl border border-slate-200 bg-white">
+            <input type="text" id="c-partner" value="${w.partner || ''}" oninput="if(app.completingWorkout) app.completingWorkout.partner = this.value" placeholder="נועה, מאי, שירה..." class="w-full p-2 rounded-xl border border-slate-200 bg-white">
           </div>
           <!-- Dynamic Multi-Video Links for Completing -->
           <div class="space-y-2 pt-2 border-t border-cyan-200">
@@ -487,7 +487,7 @@ function renderCompletePlannedModal() {
 
       <div>
         <label class="font-bold text-slate-600 block mb-1">הערות ודגשים לאימון</label>
-        <textarea id="c-notes" rows="2" placeholder="איך הרגיש?..." class="w-full p-2 rounded-xl border border-slate-200">${w.notes || ''}</textarea>
+        <textarea id="c-notes" rows="2" oninput="if(app.completingWorkout) app.completingWorkout.notes = this.value" placeholder="איך הרגיש?..." class="w-full p-2 rounded-xl border border-slate-200">${w.notes || ''}</textarea>
       </div>
     </div>
 

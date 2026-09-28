@@ -294,7 +294,7 @@ class LibiFitApp {
       <div class="bg-gradient-to-r from-purple-800 via-indigo-700 to-purple-900 text-white px-3 py-1.5 text-xs font-bold flex items-center justify-between shadow-xs sticky top-0 z-50">
         <span class="flex items-center gap-1.5 truncate">
           <span class="text-sm animate-pulse">🧪</span>
-          <span>אתר בדיקות • גרסה מעודכנת (13:50)</span>
+          <span>אתר בדיקות • גרסה מעודכנת (14:00)</span>
         </span>
         <div class="flex items-center gap-1.5 shrink-0">
           <button onclick="app.clearCacheAndReload()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 font-black px-2 py-0.5 rounded text-[10px] whitespace-nowrap shadow-xs active:scale-95 transition" title="ניקוי זיכרון מטמון וטעינת הגרסה הכי חדשה">
@@ -522,12 +522,35 @@ class LibiFitApp {
     this.openModal('workoutForm');
   }
 
+  syncWorkoutFormInputs() {
+    if (!this.editingWorkout) return;
+    const titleEl = document.getElementById('w-title');
+    if (titleEl) this.editingWorkout.title = titleEl.value;
+
+    const dateEl = document.getElementById('w-date');
+    if (dateEl) this.editingWorkout.date = dateEl.value;
+
+    const startTimeEl = document.getElementById('w-start-time');
+    if (startTimeEl) this.editingWorkout.startTime = startTimeEl.value;
+
+    const endTimeEl = document.getElementById('w-end-time');
+    if (endTimeEl) this.editingWorkout.endTime = endTimeEl.value;
+
+    const notesEl = document.getElementById('w-notes');
+    if (notesEl) this.editingWorkout.notes = notesEl.value;
+
+    const partnerEl = document.getElementById('w-partner');
+    if (partnerEl) this.editingWorkout.partner = partnerEl.value;
+  }
+
   toggleWorkoutPlanned(checked) {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.isPlanned = checked;
     this.render();
   }
 
   changeWorkoutType(typeId) {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.type = typeId;
     const sportsMap = this.getAllSportsMap();
     this.editingWorkout.color = sportsMap[typeId]?.accentColor || '#0EA5E9';
@@ -541,6 +564,7 @@ class LibiFitApp {
 
   setWorkoutColor(hex) {
     if (this.editingWorkout) {
+      this.syncWorkoutFormInputs();
       this.editingWorkout.color = hex;
       this.render();
     }
@@ -548,6 +572,7 @@ class LibiFitApp {
 
   setCompletingColor(hex) {
     if (this.completingWorkout) {
+      this.syncCompletingWorkoutFormInputs();
       this.completingWorkout.color = hex;
       this.render();
     }
@@ -574,9 +599,13 @@ class LibiFitApp {
     } else if (!current.includes(name)) {
       input.value = current + ', ' + name;
     }
+    if (this.editingWorkout) {
+      this.editingWorkout.partner = input.value;
+    }
   }
 
   addWorkoutVideoUrl() {
+    this.syncWorkoutFormInputs();
     if (!this.editingWorkout.videoUrls) {
       this.editingWorkout.videoUrls = this.editingWorkout.videoUrl ? [this.editingWorkout.videoUrl] : [];
     }
@@ -592,6 +621,7 @@ class LibiFitApp {
   }
 
   removeWorkoutVideoUrl(idx) {
+    this.syncWorkoutFormInputs();
     if (!this.editingWorkout.videoUrls) return;
     this.editingWorkout.videoUrls.splice(idx, 1);
     if (this.editingWorkout.videoUrls.length === 0) {
@@ -602,6 +632,7 @@ class LibiFitApp {
 
   loadTemplateIntoCurrentWorkout(tmplId) {
     if (!tmplId) return;
+    this.syncWorkoutFormInputs();
     const tmpl = this.templates.find(t => t.id === tmplId);
     if (!tmpl) return;
 
@@ -643,6 +674,7 @@ class LibiFitApp {
   }
 
   addExerciseToWorkout() {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.exercises.push({
       name: '',
       isBodyweight: false,
@@ -656,12 +688,29 @@ class LibiFitApp {
   }
 
   removeExerciseFromWorkout(idx) {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.exercises.splice(idx, 1);
     this.render();
   }
 
   toggleExBodyweight(idx, checked) {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.exercises[idx].isBodyweight = checked;
+    this.render();
+  }
+
+  addSetToExercise(idx) {
+    this.syncWorkoutFormInputs();
+    const ex = this.editingWorkout.exercises[idx];
+    const nextNum = ex.sets.length + 1;
+    const lastWeight = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].weight : '';
+    const lastReps = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].reps : 10;
+    ex.sets.push({
+      setNum: nextNum,
+      weight: lastWeight,
+      reps: lastReps,
+      done: false
+    });
     this.render();
   }
 
@@ -758,7 +807,26 @@ class LibiFitApp {
     this.openModal('completePlanned');
   }
 
+  syncCompletingWorkoutFormInputs() {
+    if (!this.completingWorkout) return;
+    const titleEl = document.getElementById('c-title');
+    if (titleEl) this.completingWorkout.title = titleEl.value;
+
+    const startTimeEl = document.getElementById('c-start-time');
+    if (startTimeEl) this.completingWorkout.startTime = startTimeEl.value;
+
+    const endTimeEl = document.getElementById('c-end-time');
+    if (endTimeEl) this.completingWorkout.endTime = endTimeEl.value;
+
+    const notesEl = document.getElementById('c-notes');
+    if (notesEl) this.completingWorkout.notes = notesEl.value;
+
+    const partnerEl = document.getElementById('c-partner');
+    if (partnerEl) this.completingWorkout.partner = partnerEl.value;
+  }
+
   changeCompletingWorkoutType(typeId) {
+    this.syncCompletingWorkoutFormInputs();
     this.completingWorkout.type = typeId;
     if (typeId === 'gym' && (!this.completingWorkout.exercises || this.completingWorkout.exercises.length === 0)) {
       this.completingWorkout.exercises = [
@@ -770,6 +838,7 @@ class LibiFitApp {
 
   loadTemplateIntoCompleting(tmplId) {
     if (!tmplId) return;
+    this.syncCompletingWorkoutFormInputs();
     const tmpl = this.templates.find(t => t.id === tmplId);
     if (!tmpl) return;
 
@@ -810,6 +879,7 @@ class LibiFitApp {
   }
 
   addExerciseToCompleting() {
+    this.syncCompletingWorkoutFormInputs();
     this.completingWorkout.exercises.push({
       name: '',
       isBodyweight: false,
@@ -822,11 +892,13 @@ class LibiFitApp {
   }
 
   removeExerciseFromCompleting(idx) {
+    this.syncCompletingWorkoutFormInputs();
     this.completingWorkout.exercises.splice(idx, 1);
     this.render();
   }
 
   toggleCompletingExBodyweight(idx, checked) {
+    this.syncCompletingWorkoutFormInputs();
     this.completingWorkout.exercises[idx].isBodyweight = checked;
     this.render();
   }
@@ -844,6 +916,7 @@ class LibiFitApp {
   }
 
   addCompletingVideoUrl() {
+    this.syncCompletingWorkoutFormInputs();
     if (!this.completingWorkout.videoUrls) {
       this.completingWorkout.videoUrls = this.completingWorkout.videoUrl ? [this.completingWorkout.videoUrl] : [];
     }
@@ -859,6 +932,7 @@ class LibiFitApp {
   }
 
   removeCompletingVideoUrl(idx) {
+    this.syncCompletingWorkoutFormInputs();
     if (!this.completingWorkout.videoUrls) return;
     this.completingWorkout.videoUrls.splice(idx, 1);
     if (this.completingWorkout.videoUrls.length === 0) {
