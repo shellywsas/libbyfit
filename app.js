@@ -32,6 +32,12 @@ class LibiFitApp {
     this.authTab = 'login';
     this.authError = '';
     this.authLoading = false;
+
+    this.customSports = [];
+    this.surveyActiveTab = 'daily';
+    this.trendsMetric = 'energy';
+    this.trendsDate = new Date();
+    this.editingCustomSport = null;
   }
 
   getUserName() {
@@ -39,6 +45,57 @@ class LibiFitApp {
       return window.firebaseService.getUserName();
     }
     return localStorage.getItem('libi_username') || 'ליבי';
+  }
+
+  getSportsList() {
+    return getAllSportsList(this.customSports);
+  }
+
+  getAllSportsMap() {
+    return getAllSportsMap(this.customSports);
+  }
+
+  openCustomSportModal() {
+    this.editingCustomSport = {
+      id: 'custom-' + Date.now(),
+      name: '',
+      emoji: '🏊‍♀️',
+      accentColor: '#06B6D4'
+    };
+    this.openModal('customSport');
+  }
+
+  saveCustomSport(sportData) {
+    if (!sportData || !sportData.name || !sportData.name.trim()) return;
+    const cleanName = sportData.name.trim();
+    const newSport = {
+      id: sportData.id || ('custom-' + Date.now()),
+      name: cleanName,
+      emoji: sportData.emoji || '⭐',
+      accentColor: sportData.accentColor || '#0284C7',
+      lightBg: sportData.lightBg || '#F0F9FF',
+      isCustom: true
+    };
+    const existingIdx = this.customSports.findIndex(s => s.id === newSport.id);
+    if (existingIdx >= 0) {
+      this.customSports[existingIdx] = newSport;
+    } else {
+      this.customSports.push(newSport);
+    }
+    this.saveState();
+    this.closeModal();
+    if (this.editingWorkout) {
+      this.changeWorkoutType(newSport.id);
+    } else {
+      this.render();
+    }
+  }
+
+  deleteCustomSport(id) {
+    if (!confirm('האם את בטוחה שברצונך למחוק ספורט זה?')) return;
+    this.customSports = this.customSports.filter(s => s.id !== id);
+    this.saveState();
+    this.render();
   }
 
   setTemplateFilter(sportId) {
@@ -52,12 +109,14 @@ class LibiFitApp {
       this.templates = JSON.parse(localStorage.getItem('libi_templates')) || JSON.parse(localStorage.getItem('libby_templates')) || DEFAULT_TEMPLATES;
       this.recoveryLogs = JSON.parse(localStorage.getItem('libi_recovery')) || JSON.parse(localStorage.getItem('libby_recovery')) || {};
       this.personalRecords = JSON.parse(localStorage.getItem('libi_prs')) || JSON.parse(localStorage.getItem('libby_prs')) || DEFAULT_PRS;
+      this.customSports = JSON.parse(localStorage.getItem('libi_custom_sports')) || [];
     } catch (e) {
       console.error('Error loading state:', e);
       this.workouts = [];
       this.templates = DEFAULT_TEMPLATES;
       this.recoveryLogs = {};
       this.personalRecords = DEFAULT_PRS;
+      this.customSports = [];
     }
   }
 
@@ -67,12 +126,14 @@ class LibiFitApp {
       const tJson = JSON.stringify(this.templates);
       const rJson = JSON.stringify(this.recoveryLogs);
       const pJson = JSON.stringify(this.personalRecords);
+      const csJson = JSON.stringify(this.customSports);
 
       // Save to primary Libi keys
       localStorage.setItem('libi_workouts', wJson);
       localStorage.setItem('libi_templates', tJson);
       localStorage.setItem('libi_recovery', rJson);
       localStorage.setItem('libi_prs', pJson);
+      localStorage.setItem('libi_custom_sports', csJson);
 
       // Also mirror to legacy keys for safety
       localStorage.setItem('libby_workouts', wJson);
@@ -212,6 +273,7 @@ class LibiFitApp {
   render() {
     const appEl = document.getElementById('app');
     appEl.innerHTML = `
+      ${this.renderStagingBanner()}
       ${this.renderWhatsAppBanner()}
       ${this.renderHeader()}
       ${this.renderTimerBar()}
@@ -225,6 +287,26 @@ class LibiFitApp {
     if (window.lucide) {
       window.lucide.createIcons();
     }
+  }
+
+  renderStagingBanner() {
+    return '';
+  }
+
+  async clearCacheAndReload() {
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+      }
+    } catch (e) {
+      console.log('Cache clear error:', e);
+    }
+    window.location.href = window.location.pathname + '?v=' + Date.now();
   }
 
   renderWhatsAppBanner() {
@@ -411,14 +493,52 @@ class LibiFitApp {
     this.openModal('workoutForm');
   }
 
+  openEditWorkoutModal(workoutId) {
+    const w = this.workouts.find(item => item.id === workoutId);
+    if (!w) return;
+    this.editingWorkout = JSON.parse(JSON.stringify(w));
+    if (!this.editingWorkout.videoUrls) {
+      this.editingWorkout.videoUrls = getWorkoutVideoUrls(this.editingWorkout);
+    }
+    if (!this.editingWorkout.videoUrls || this.editingWorkout.videoUrls.length === 0) {
+      this.editingWorkout.videoUrls = [''];
+    }
+    this.closeModal();
+    this.openModal('workoutForm');
+  }
+
+  syncWorkoutFormInputs() {
+    if (!this.editingWorkout) return;
+    const titleEl = document.getElementById('w-title');
+    if (titleEl) this.editingWorkout.title = titleEl.value;
+
+    const dateEl = document.getElementById('w-date');
+    if (dateEl) this.editingWorkout.date = dateEl.value;
+
+    const startTimeEl = document.getElementById('w-start-time');
+    if (startTimeEl) this.editingWorkout.startTime = startTimeEl.value;
+
+    const endTimeEl = document.getElementById('w-end-time');
+    if (endTimeEl) this.editingWorkout.endTime = endTimeEl.value;
+
+    const notesEl = document.getElementById('w-notes');
+    if (notesEl) this.editingWorkout.notes = notesEl.value;
+
+    const partnerEl = document.getElementById('w-partner');
+    if (partnerEl) this.editingWorkout.partner = partnerEl.value;
+  }
+
   toggleWorkoutPlanned(checked) {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.isPlanned = checked;
     this.render();
   }
 
   changeWorkoutType(typeId) {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.type = typeId;
-    this.editingWorkout.color = SPORT_CONFIGS[typeId]?.accentColor || '#0EA5E9';
+    const sportsMap = this.getAllSportsMap();
+    this.editingWorkout.color = sportsMap[typeId]?.accentColor || '#0EA5E9';
     if (typeId === 'gym' && (!this.editingWorkout.exercises || this.editingWorkout.exercises.length === 0)) {
       this.editingWorkout.exercises = [
         { name: 'סקוואט עם מוט', isBodyweight: false, sets: [{ setNum: 1, weight: 40, reps: 8, done: true }, { setNum: 2, weight: 40, reps: 8, done: true }] }
@@ -429,6 +549,7 @@ class LibiFitApp {
 
   setWorkoutColor(hex) {
     if (this.editingWorkout) {
+      this.syncWorkoutFormInputs();
       this.editingWorkout.color = hex;
       this.render();
     }
@@ -436,6 +557,7 @@ class LibiFitApp {
 
   setCompletingColor(hex) {
     if (this.completingWorkout) {
+      this.syncCompletingWorkoutFormInputs();
       this.completingWorkout.color = hex;
       this.render();
     }
@@ -462,9 +584,13 @@ class LibiFitApp {
     } else if (!current.includes(name)) {
       input.value = current + ', ' + name;
     }
+    if (this.editingWorkout) {
+      this.editingWorkout.partner = input.value;
+    }
   }
 
   addWorkoutVideoUrl() {
+    this.syncWorkoutFormInputs();
     if (!this.editingWorkout.videoUrls) {
       this.editingWorkout.videoUrls = this.editingWorkout.videoUrl ? [this.editingWorkout.videoUrl] : [];
     }
@@ -480,6 +606,7 @@ class LibiFitApp {
   }
 
   removeWorkoutVideoUrl(idx) {
+    this.syncWorkoutFormInputs();
     if (!this.editingWorkout.videoUrls) return;
     this.editingWorkout.videoUrls.splice(idx, 1);
     if (this.editingWorkout.videoUrls.length === 0) {
@@ -490,6 +617,7 @@ class LibiFitApp {
 
   loadTemplateIntoCurrentWorkout(tmplId) {
     if (!tmplId) return;
+    this.syncWorkoutFormInputs();
     const tmpl = this.templates.find(t => t.id === tmplId);
     if (!tmpl) return;
 
@@ -531,6 +659,7 @@ class LibiFitApp {
   }
 
   addExerciseToWorkout() {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.exercises.push({
       name: '',
       isBodyweight: false,
@@ -544,12 +673,29 @@ class LibiFitApp {
   }
 
   removeExerciseFromWorkout(idx) {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.exercises.splice(idx, 1);
     this.render();
   }
 
   toggleExBodyweight(idx, checked) {
+    this.syncWorkoutFormInputs();
     this.editingWorkout.exercises[idx].isBodyweight = checked;
+    this.render();
+  }
+
+  addSetToExercise(idx) {
+    this.syncWorkoutFormInputs();
+    const ex = this.editingWorkout.exercises[idx];
+    const nextNum = ex.sets.length + 1;
+    const lastWeight = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].weight : '';
+    const lastReps = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].reps : 10;
+    ex.sets.push({
+      setNum: nextNum,
+      weight: lastWeight,
+      reps: lastReps,
+      done: false
+    });
     this.render();
   }
 
@@ -585,14 +731,18 @@ class LibiFitApp {
 
   saveWorkoutFromForm() {
     const w = this.editingWorkout;
-    w.date = document.getElementById('w-date').value || w.date;
+    const sportsMap = this.getAllSportsMap();
+    w.date = document.getElementById('w-date')?.value || w.date;
     w.startTime = document.getElementById('w-start-time')?.value || '18:00';
     w.endTime = document.getElementById('w-end-time')?.value || '19:30';
-    w.title = document.getElementById('w-title').value.trim() || (w.isPlanned ? 'אימון מתוכנן' : SPORT_CONFIGS[w.type]?.name || 'אימון');
+    const titleVal = document.getElementById('w-title')?.value.trim();
+    w.title = titleVal || (w.isPlanned ? 'אימון מתוכנן' : (sportsMap[w.type]?.name || 'אימון'));
     w.notes = document.getElementById('w-notes')?.value.trim() || '';
 
-    if (!w.isPlanned && w.type === 'volleyball') {
-      const partnerVal = document.getElementById('w-partner')?.value.trim() || '';
+    // Partner support (save regardless of planned, if entered)
+    const partnerEl = document.getElementById('w-partner');
+    if (partnerEl) {
+      const partnerVal = partnerEl.value.trim();
       w.partner = partnerVal;
       if (partnerVal) {
         partnerVal.split(',').forEach(p => this.saveTeammate(p.trim()));
@@ -633,18 +783,35 @@ class LibiFitApp {
     if (!target) return;
 
     const vUrls = getWorkoutVideoUrls(target);
-    this.completingWorkout = {
-      ...target,
-      type: target.type === 'planned' ? 'volleyball' : (target.type || 'volleyball'),
-      exercises: target.exercises || [],
-      partner: target.partner || '',
-      videoUrls: vUrls.length > 0 ? [...vUrls] : [''],
-      videoUrl: target.videoUrl || ''
-    };
+    this.completingWorkout = JSON.parse(JSON.stringify(target));
+    this.completingWorkout.type = (target.type === 'planned' || !target.type) ? 'volleyball' : target.type;
+    this.completingWorkout.exercises = target.exercises || [];
+    this.completingWorkout.partner = target.partner || '';
+    this.completingWorkout.videoUrls = vUrls.length > 0 ? [...vUrls] : [''];
+    this.completingWorkout.videoUrl = target.videoUrl || '';
     this.openModal('completePlanned');
   }
 
+  syncCompletingWorkoutFormInputs() {
+    if (!this.completingWorkout) return;
+    const titleEl = document.getElementById('c-title');
+    if (titleEl) this.completingWorkout.title = titleEl.value;
+
+    const startTimeEl = document.getElementById('c-start-time');
+    if (startTimeEl) this.completingWorkout.startTime = startTimeEl.value;
+
+    const endTimeEl = document.getElementById('c-end-time');
+    if (endTimeEl) this.completingWorkout.endTime = endTimeEl.value;
+
+    const notesEl = document.getElementById('c-notes');
+    if (notesEl) this.completingWorkout.notes = notesEl.value;
+
+    const partnerEl = document.getElementById('c-partner');
+    if (partnerEl) this.completingWorkout.partner = partnerEl.value;
+  }
+
   changeCompletingWorkoutType(typeId) {
+    this.syncCompletingWorkoutFormInputs();
     this.completingWorkout.type = typeId;
     if (typeId === 'gym' && (!this.completingWorkout.exercises || this.completingWorkout.exercises.length === 0)) {
       this.completingWorkout.exercises = [
@@ -656,6 +823,7 @@ class LibiFitApp {
 
   loadTemplateIntoCompleting(tmplId) {
     if (!tmplId) return;
+    this.syncCompletingWorkoutFormInputs();
     const tmpl = this.templates.find(t => t.id === tmplId);
     if (!tmpl) return;
 
@@ -696,6 +864,7 @@ class LibiFitApp {
   }
 
   addExerciseToCompleting() {
+    this.syncCompletingWorkoutFormInputs();
     this.completingWorkout.exercises.push({
       name: '',
       isBodyweight: false,
@@ -708,11 +877,13 @@ class LibiFitApp {
   }
 
   removeExerciseFromCompleting(idx) {
+    this.syncCompletingWorkoutFormInputs();
     this.completingWorkout.exercises.splice(idx, 1);
     this.render();
   }
 
   toggleCompletingExBodyweight(idx, checked) {
+    this.syncCompletingWorkoutFormInputs();
     this.completingWorkout.exercises[idx].isBodyweight = checked;
     this.render();
   }
@@ -730,6 +901,7 @@ class LibiFitApp {
   }
 
   addCompletingVideoUrl() {
+    this.syncCompletingWorkoutFormInputs();
     if (!this.completingWorkout.videoUrls) {
       this.completingWorkout.videoUrls = this.completingWorkout.videoUrl ? [this.completingWorkout.videoUrl] : [];
     }
@@ -745,6 +917,7 @@ class LibiFitApp {
   }
 
   removeCompletingVideoUrl(idx) {
+    this.syncCompletingWorkoutFormInputs();
     if (!this.completingWorkout.videoUrls) return;
     this.completingWorkout.videoUrls.splice(idx, 1);
     if (this.completingWorkout.videoUrls.length === 0) {
@@ -1032,10 +1205,19 @@ class LibiFitApp {
   resetPreviewScore(type) {
     const todayStr = this.formatDate(new Date());
     const existing = this.recoveryLogs[todayStr];
-    if (!existing) return;
-    const item = getScoreItem(existing[type]);
     const badge = document.getElementById(`${type}-preview-badge`);
     const textEl = document.getElementById(`${type}-desc-text`);
+    if (!existing || existing[type] === null || existing[type] === undefined) {
+      if (badge) {
+        badge.style.backgroundColor = '#64748B';
+        badge.innerText = 'טרם נבחר';
+      }
+      if (textEl) {
+        textEl.innerText = 'טרם נבחר';
+      }
+      return;
+    }
+    const item = getScoreItem(existing[type]);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
@@ -1061,10 +1243,19 @@ class LibiFitApp {
   resetPreviewStress() {
     const todayStr = this.formatDate(new Date());
     const existing = this.recoveryLogs[todayStr];
-    if (!existing) return;
-    const item = getStressItem(existing.stress || 3);
-    const badge = document.getElementById(`stress-preview-badge`);
-    const textEl = document.getElementById(`stress-desc-text`);
+    const badge = document.getElementById('stress-preview-badge');
+    const textEl = document.getElementById('stress-desc-text');
+    if (!existing || existing.stress === null || existing.stress === undefined) {
+      if (badge) {
+        badge.style.backgroundColor = '#64748B';
+        badge.innerText = 'טרם נבחר';
+      }
+      if (textEl) {
+        textEl.innerText = 'טרם נבחר';
+      }
+      return;
+    }
+    const item = getStressItem(existing.stress);
     if (badge) {
       badge.style.backgroundColor = item.color;
       badge.innerText = `${item.val} • ${item.label}`;
@@ -1074,16 +1265,43 @@ class LibiFitApp {
     }
   }
 
+  setSurveyView(view) {
+    this.surveyActiveTab = view;
+    this.render();
+  }
+
+  setTrendsMetric(metric) {
+    this.trendsMetric = metric;
+    this.render();
+  }
+
+  changeTrendsMonth(delta) {
+    if (!this.trendsDate) {
+      this.trendsDate = new Date();
+    }
+    this.trendsDate = new Date(this.trendsDate.getFullYear(), this.trendsDate.getMonth() + delta, 1);
+    this.render();
+  }
+
+  resetTrendsMonth() {
+    this.trendsDate = new Date();
+    this.render();
+  }
+
   setSurveyVal(type, val) {
     const todayStr = this.formatDate(new Date());
     if (!this.recoveryLogs[todayStr]) {
       this.recoveryLogs[todayStr] = {
-        fatigue: 7,
-        mood: 8,
-        stress: 3,
+        fatigue: null,
+        mood: null,
+        stress: null,
         notes: '',
         period: { isPeriod: false, flow: 'medium', symptoms: [] }
       };
+    }
+    const notesEl = document.getElementById('recovery-notes-input');
+    if (notesEl) {
+      this.recoveryLogs[todayStr].notes = notesEl.value;
     }
     this.recoveryLogs[todayStr][type] = val;
     this.saveState();
@@ -1094,9 +1312,9 @@ class LibiFitApp {
     const todayStr = this.formatDate(new Date());
     if (!this.recoveryLogs[todayStr]) {
       this.recoveryLogs[todayStr] = {
-        fatigue: 7,
-        mood: 8,
-        stress: 3,
+        fatigue: null,
+        mood: null,
+        stress: null,
         notes: '',
         period: { isPeriod: false, flow: 'medium', symptoms: [] }
       };
@@ -1104,7 +1322,12 @@ class LibiFitApp {
     if (!this.recoveryLogs[todayStr].period) {
       this.recoveryLogs[todayStr].period = { isPeriod: false, flow: 'medium', symptoms: [] };
     }
+    const notesEl = document.getElementById('recovery-notes-input');
+    if (notesEl) {
+      this.recoveryLogs[todayStr].notes = notesEl.value;
+    }
     this.recoveryLogs[todayStr].period.isPeriod = !this.recoveryLogs[todayStr].period.isPeriod;
+    this.saveState();
     this.render();
   }
 
@@ -1150,30 +1373,37 @@ class LibiFitApp {
 
   saveTodayRecovery() {
     const todayStr = this.formatDate(new Date());
-    if (!this.recoveryLogs[todayStr]) {
-      this.recoveryLogs[todayStr] = {
-        fatigue: 7,
-        mood: 8,
-        stress: 3,
-        notes: '',
-        period: { isPeriod: false, flow: 'medium', symptoms: [] }
-      };
+    const log = this.recoveryLogs[todayStr];
+    if (!log || (log.fatigue === null && log.mood === null && log.stress === null && (!log.period || !log.period.isPeriod))) {
+      alert('נא לבחור לפחות מדד אחד (עייפות, מצב רוח, סטרס או ווסת) לפני השמירה 😊');
+      return;
     }
     const notesEl = document.getElementById('recovery-notes-input');
     if (notesEl) {
-      this.recoveryLogs[todayStr].notes = notesEl.value;
+      log.notes = notesEl.value;
     }
     this.saveState();
     if (window.confetti) {
       window.confetti({ particleCount: 45, spread: 65, origin: { y: 0.8 } });
     }
-    alert('הסקר היומי ומדד הלחץ נשמרו בהצלחה! 💙');
+    alert('הסקר היומי נשמר בהצלחה! 💙');
     this.render();
   }
 
   // PR Methods
   openPRModal() {
     this.openModal('prForm');
+  }
+
+  handlePRCategoryChange(val) {
+    const box = document.getElementById('custom-category-box');
+    if (box) {
+      if (val === 'אחר') {
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
   }
 
   handlePRUnitChange(val) {
@@ -1188,20 +1418,22 @@ class LibiFitApp {
   }
 
   saveNewPR() {
-    const title = document.getElementById('new-pr-title').value.trim();
-    const unitSelect = document.getElementById('new-pr-unit').value;
+    const title = document.getElementById('new-pr-title')?.value.trim();
+    const unitSelect = document.getElementById('new-pr-unit')?.value;
     const customUnit = document.getElementById('new-pr-custom-unit')?.value.trim();
     const unit = (unitSelect === 'custom' && customUnit) ? customUnit : (unitSelect === 'custom' ? 'יח׳' : unitSelect);
-    const category = document.getElementById('new-pr-category')?.value || 'אירובי וריצה';
-    const val = parseFloat(document.getElementById('new-pr-val').value);
-    const note = document.getElementById('new-pr-note').value.trim();
+    const catSelect = document.getElementById('new-pr-category')?.value || 'חדר כושר';
+    const customCat = document.getElementById('new-pr-custom-category')?.value.trim();
+    const category = (catSelect === 'אחר' && customCat) ? customCat : catSelect;
+    const val = parseFloat(document.getElementById('new-pr-val')?.value);
+    const note = document.getElementById('new-pr-note')?.value.trim() || '';
+    const dateInput = document.getElementById('new-pr-date')?.value || this.formatDate(new Date());
 
     if (!title || isNaN(val) || val <= 0) {
       alert('נא להזין שם וערך שיא תקינים');
       return;
     }
 
-    const todayStr = this.formatDate(new Date());
     const newRecord = {
       id: 'pr-' + Date.now(),
       title: title,
@@ -1209,7 +1441,7 @@ class LibiFitApp {
       unit: unit,
       currentPR: val,
       history: [
-        { date: todayStr, value: val, note: note || 'שיא ראשוני' }
+        { date: dateInput, value: val, note: note || 'שיא ראשוני' }
       ]
     };
 
@@ -1230,19 +1462,19 @@ class LibiFitApp {
   }
 
   saveUpdatedPR() {
-    const val = parseFloat(document.getElementById('update-pr-val').value);
-    const note = document.getElementById('update-pr-note').value.trim();
+    const val = parseFloat(document.getElementById('update-pr-val')?.value);
+    const note = document.getElementById('update-pr-note')?.value.trim() || '';
+    const dateInput = document.getElementById('update-pr-date')?.value || this.formatDate(new Date());
 
-    if (!val) {
+    if (!val || isNaN(val)) {
       alert('נא להזין ערך שיא תקין');
       return;
     }
 
-    const todayStr = this.formatDate(new Date());
     this.editingPR.currentPR = val;
     if (!this.editingPR.history) this.editingPR.history = [];
     this.editingPR.history.push({
-      date: todayStr,
+      date: dateInput,
       value: val,
       note: note
     });

@@ -148,57 +148,50 @@ function renderMonthlyCalendar() {
   let cellsHtml = '';
 
   for (let i = 0; i < firstDayIndex; i++) {
-    cellsHtml += `<div class="h-20 bg-slate-50/50 rounded-xl"></div>`;
+    cellsHtml += `<div class="min-h-[74px] bg-slate-50/50 rounded-xl border border-transparent"></div>`;
   }
 
   for (let day = 1; day <= totalDays; day++) {
     const d = new Date(year, month, day);
     const dStr = app.formatDate(d);
     const dayWorkouts = app.workouts.filter(w => w.date === dStr);
-    const recovery = app.recoveryLogs[dStr];
     const isToday = dStr === todayStr;
 
-    const fatigueItem = recovery ? getScoreItem(recovery.fatigue) : null;
-    const moodItem = recovery ? getScoreItem(recovery.mood) : null;
-    const stressItem = recovery && recovery.stress ? getStressItem(recovery.stress) : null;
-    const isPeriod = recovery && recovery.period && recovery.period.isPeriod;
-
     cellsHtml += `
-      <div onclick="app.selectDateAndGoDaily('${dStr}')" class="h-20 bg-white border ${isToday ? 'border-brand-500 ring-2 ring-brand-300' : 'border-slate-100'} rounded-xl p-1 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition shadow-xs relative overflow-hidden">
-        <div class="flex justify-between items-center">
+      <div onclick="app.selectDateAndGoDaily('${dStr}')" class="min-h-[74px] bg-white border ${isToday ? 'border-brand-500 ring-2 ring-brand-300' : 'border-slate-100'} rounded-xl p-1 flex flex-col justify-start cursor-pointer hover:bg-slate-50 transition shadow-2xs relative overflow-hidden group">
+        <div class="flex justify-between items-center mb-1">
           <span class="text-[11px] font-bold ${isToday ? 'w-5 h-5 rounded-full bg-brand-500 text-white flex items-center justify-center text-[10px]' : 'text-slate-700'}">
             ${day}
           </span>
-          ${isPeriod ? `<span class="text-[10px]" title="יום מחזור">🩸</span>` : ''}
+          ${dayWorkouts.length > 0 ? `<span class="text-[9px] font-bold text-slate-400 font-mono">${dayWorkouts.length}</span>` : ''}
         </div>
 
-        ${recovery ? `
-          <div class="flex items-center justify-center gap-0.5 my-0.5">
-            <span class="text-[8px] font-black text-white px-1 py-0.2 rounded" style="background-color: ${fatigueItem.color};" title="אנרגיה: ${recovery.fatigue}">
-              🔋${recovery.fatigue}
-            </span>
-            <span class="text-[8px] font-black text-white px-1 py-0.2 rounded" style="background-color: ${moodItem.color};" title="מצב רוח: ${recovery.mood}">
-              😊${recovery.mood}
-            </span>
-            ${stressItem ? `
-              <span class="text-[8px] font-black text-white px-1 py-0.2 rounded" style="background-color: ${stressItem.color};" title="לחץ: ${recovery.stress}">
-                ⚡${recovery.stress}
-              </span>
-            ` : ''}
-          </div>
-        ` : `
-          <div class="h-3.5"></div>
-        `}
-
-        <div class="flex flex-wrap gap-1 items-center justify-center overflow-hidden">
-          ${dayWorkouts.map(w => {
+        <div class="flex flex-col gap-0.5 overflow-hidden flex-1">
+          ${dayWorkouts.slice(0, 3).map(w => {
             const wColor = getWorkoutColor(w);
+            const sportsMap = app.getAllSportsMap ? app.getAllSportsMap() : SPORT_CONFIGS;
+            const cfg = sportsMap[w.type] || sportsMap.other || SPORT_CONFIGS.other;
+            const wTitle = w.title || cfg.name;
             if (w.isPlanned) {
-              return `<span class="w-2.5 h-2.5 rounded-full border-2 border-amber-500 bg-amber-100 shadow-xs" title="מתוכנן: ${w.title}"></span>`;
+              return `
+                <div class="w-full truncate rounded px-1 py-0.5 text-[8.5px] font-bold text-amber-900 bg-amber-100 border border-amber-300 leading-tight flex items-center gap-0.5" title="מתוכנן: ${wTitle}">
+                  <span class="shrink-0 text-[8px]">⏳</span>
+                  <span class="truncate">${wTitle}</span>
+                </div>
+              `;
             }
-            const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
-            return `<span class="w-2.5 h-2.5 rounded-full shadow-xs" style="background-color: ${wColor};" title="${w.title || cfg.name}"></span>`;
+            return `
+              <div class="w-full truncate rounded px-1 py-0.5 text-[8.5px] font-bold text-white leading-tight flex items-center gap-0.5 shadow-2xs" style="background-color: ${wColor};" title="${wTitle}">
+                <span class="shrink-0 text-[8px]">${cfg.emoji}</span>
+                <span class="truncate">${wTitle}</span>
+              </div>
+            `;
           }).join('')}
+          ${dayWorkouts.length > 3 ? `
+            <div class="text-[8px] text-slate-400 font-bold text-center leading-tight">
+              + עוד ${dayWorkouts.length - 3}
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
@@ -207,14 +200,8 @@ function renderMonthlyCalendar() {
   return `
     <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm space-y-2">
       <div class="flex items-center justify-between text-[11px] text-slate-500 pb-1 border-b border-slate-100">
-        <span class="font-bold text-slate-700">תצוגה חודשית מורחבת</span>
-        <div class="flex items-center gap-2 text-[10px]">
-          <span title="אנרגיה">🔋</span>
-          <span title="מצב רוח">😊</span>
-          <span title="לחץ">⚡</span>
-          <span title="ווסת">🩸</span>
-          <span title="אימון מתוכנן">⏳ מתוכנן</span>
-        </div>
+        <span class="font-bold text-slate-700">תצוגת אימונים חודשית</span>
+        <span class="text-[10px] text-slate-400">לחיצה על יום מעבירה לתצוגה יומית מפורטת</span>
       </div>
       <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-400 pb-1">
         ${dayHeaders.map(h => `<div>${h}</div>`).join('')}
@@ -330,7 +317,8 @@ function renderWorkoutCard(w, expanded = false) {
   }
 
   // Regular completed workout
-  const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
+  const sportsMap = app.getAllSportsMap ? app.getAllSportsMap() : SPORT_CONFIGS;
+  const cfg = sportsMap[w.type] || sportsMap.other || SPORT_CONFIGS.other;
   const wColor = getWorkoutColor(w);
   const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
   const videoUrls = getWorkoutVideoUrls(w);

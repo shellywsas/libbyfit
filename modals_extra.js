@@ -2,7 +2,8 @@
 
 function renderWorkoutDetailModal() {
   const w = app.detailWorkout;
-  const cfg = SPORT_CONFIGS[w.type] || SPORT_CONFIGS.other;
+  const sportsMap = app.getAllSportsMap ? app.getAllSportsMap() : SPORT_CONFIGS;
+  const cfg = sportsMap[w.type] || SPORT_CONFIGS.other;
   const timeDisplay = formatWorkoutTime(w.startTime, w.endTime);
   const videoUrls = getWorkoutVideoUrls(w);
 
@@ -128,13 +129,19 @@ function renderWorkoutDetailModal() {
       </div>
     </div>
 
-    <div class="p-3 border-t border-slate-100 flex justify-between bg-slate-50">
+    <div class="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 gap-2">
       <button onclick="app.deleteWorkout('${w.id}')" class="text-red-600 hover:bg-red-50 px-3 py-2 rounded-xl text-xs font-bold transition">
         מחק אימון
       </button>
-      <button onclick="app.closeModal()" class="bg-brand-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-brand-700">
-        סגור
-      </button>
+      <div class="flex gap-2">
+        <button onclick="app.openEditWorkoutModal('${w.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          <span>עריכת אימון ✏️</span>
+        </button>
+        <button onclick="app.closeModal()" class="bg-brand-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-brand-700">
+          סגור
+        </button>
+      </div>
     </div>
   `;
 }
@@ -282,6 +289,73 @@ function renderTemplateFormModal() {
   `;
 }
 
+function renderCustomSportModal() {
+  const sport = app.editingCustomSport || { name: '', emoji: '🏊‍♀️', accentColor: '#06B6D4' };
+  const quickEmojis = ['🏊‍♀️', '🏀', '⚽', '🥋', '🥊', '🚴‍♀️', '🛹', '🏓', '🏸', '🏄‍♀️', '🎿', '🩰', '🏹', '🎯', '🎳', '🥊', '⭐'];
+
+  return `
+    <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-sky-50">
+      <h3 class="font-bold text-sm text-sky-900 flex items-center gap-1.5">
+        <span>🏃‍♀️ יצירת סוג ספורט חדש</span>
+      </h3>
+      <button onclick="app.closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <div class="p-4 space-y-4 text-xs">
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">שם הספורט (למשל: שחייה, כדורסל, יוגה, פילאטיס)</label>
+        <input type="text" id="cs-name" value="${sport.name || ''}" placeholder="למשל: שחייה" class="w-full p-2.5 rounded-xl border border-slate-200 font-bold focus:border-sky-500 focus:outline-none">
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">בחרי אימוג'י מייצג:</label>
+        <div class="flex items-center gap-1.5 flex-wrap bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+          ${quickEmojis.map(em => `
+            <button
+              type="button"
+              onclick="document.getElementById('cs-emoji').value = '${em}'; document.getElementById('cs-emoji-preview').innerText = '${em}';"
+              class="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:bg-sky-50 hover:border-sky-300 text-lg flex items-center justify-center transition active:scale-90">
+              ${em}
+            </button>
+          `).join('')}
+        </div>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-slate-500 text-[11px]">או הקלידי אימוג'י אישי:</span>
+          <input type="text" id="cs-emoji" value="${sport.emoji || '🏊‍♀️'}" maxlength="4" oninput="document.getElementById('cs-emoji-preview').innerText = this.value || '⭐'" class="w-14 p-1 rounded-lg border border-slate-200 text-center font-bold text-lg">
+          <span id="cs-emoji-preview" class="text-xl p-1 bg-sky-50 rounded-lg border border-sky-200">${sport.emoji || '🏊‍♀️'}</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1.5">בחרי צבע ראשי לספורט זה:</label>
+        <div class="flex items-center gap-2 flex-wrap">
+          ${WORKOUT_COLORS.map(c => `
+            <button
+              type="button"
+              onclick="document.getElementById('cs-color').value = '${c.hex}';"
+              class="w-7 h-7 rounded-full transition-all active:scale-90 flex items-center justify-center hover:scale-105 shadow-xs"
+              style="background-color: ${c.hex};"
+              title="${c.name}">
+            </button>
+          `).join('')}
+          <input type="color" id="cs-color" value="${sport.accentColor || '#06B6D4'}" class="w-7 h-7 rounded-full border-0 p-0 cursor-pointer">
+        </div>
+      </div>
+    </div>
+
+    <div class="p-3 border-t border-slate-100 flex gap-2 bg-slate-50">
+      <button onclick="app.closeModal()" class="flex-1 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-xl">ביטול</button>
+      <button onclick="app.saveCustomSport({
+        name: document.getElementById('cs-name').value,
+        emoji: document.getElementById('cs-emoji').value,
+        accentColor: document.getElementById('cs-color').value
+      })" class="flex-2 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow transition active:scale-95">שמירת ספורט ✨</button>
+    </div>
+  `;
+}
+
 function renderPRFormModal() {
   return `
     <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-amber-50">
@@ -302,22 +376,23 @@ function renderPRFormModal() {
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="font-bold text-slate-700 block mb-1">תחום / קטגוריה</label>
-          <select id="new-pr-category" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-500 focus:outline-none">
-            <option value="אירובי וריצה">אירובי וריצה 🏃‍♀️</option>
+          <select id="new-pr-category" onchange="app.handlePRCategoryChange(this.value)" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:border-amber-500 focus:outline-none">
             <option value="חדר כושר">חדר כושר 💪</option>
             <option value="כדורעף">כדורעף 🏐</option>
+            <option value="אירובי וריצה">אירובי וריצה 🏃‍♀️</option>
             <option value="משקל גוף">משקל גוף 🤸‍♀️</option>
             <option value="שחייה">שחייה 🏊‍♀️</option>
-            <option value="כללי">כללי / אחר ⭐</option>
+            <option value="כללי">כללי ⭐</option>
+            <option value="אחר">אחר (הקלדת שם ספורט)... ✏️</option>
           </select>
         </div>
         <div>
           <label class="font-bold text-slate-700 block mb-1">יחידת מידה</label>
           <select id="new-pr-unit" onchange="app.handlePRUnitChange(this.value)" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:border-amber-500 focus:outline-none">
-            <option value='ק"מ'>ק"מ (קילומטרים) 🏃‍♀️</option>
-            <option value="מטרים">מטרים 📏</option>
             <option value='ק"ג'>ק"ג (משקל) 🏋️‍♀️</option>
             <option value="חזרות">חזרות 🔢</option>
+            <option value='ק"מ'>ק"מ (קילומטרים) 🏃‍♀️</option>
+            <option value="מטרים">מטרים 📏</option>
             <option value="שניות">שניות ⏱️</option>
             <option value="דקות">דקות ⏳</option>
             <option value='ס"מ'>ס"מ (ניתור / גובה) 🏐</option>
@@ -327,9 +402,19 @@ function renderPRFormModal() {
         </div>
       </div>
 
+      <div id="custom-category-box" class="hidden">
+        <label class="font-bold text-slate-700 block mb-1">שם הספורט / התחום (למשל: טיפוס, כדורסל, פילאטיס):</label>
+        <input type="text" id="new-pr-custom-category" placeholder="למשל: טיפוס, כדורסל, פילאטיס..." class="w-full p-2 rounded-xl border border-slate-200 text-xs focus:border-amber-500 focus:outline-none font-semibold">
+      </div>
+
       <div id="custom-unit-box" class="hidden">
         <label class="font-bold text-slate-700 block mb-1">יחידת מידה מותאמת אישית:</label>
         <input type="text" id="new-pr-custom-unit" placeholder="למשל: בריכות, צעדים, וואט..." class="w-full p-2 rounded-xl border border-slate-200 text-xs focus:border-amber-500 focus:outline-none font-medium">
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">תאריך השגת השיא (אפשר גם תאריך מהעבר):</label>
+        <input type="date" id="new-pr-date" value="${app.formatDate(new Date())}" class="w-full p-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-amber-500 focus:outline-none">
       </div>
 
       <div>
@@ -366,6 +451,11 @@ function renderUpdatePRModal() {
       <div class="bg-amber-50/70 p-3 rounded-xl border border-amber-200 text-center">
         <span class="text-slate-500 text-[11px] block">שיא קודם:</span>
         <span class="text-xl font-bold text-amber-700">${pr.currentPR} ${pr.unit}</span>
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">תאריך השגת השיא (אפשר גם תאריך מהעבר):</label>
+        <input type="date" id="update-pr-date" value="${app.formatDate(new Date())}" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-amber-500 focus:outline-none">
       </div>
 
       <div>

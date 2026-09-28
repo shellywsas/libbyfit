@@ -254,6 +254,31 @@ const SPORT_CONFIGS = {
   }
 };
 
+function getAllSportsMap(customSports = []) {
+  const map = { ...SPORT_CONFIGS };
+  if (Array.isArray(customSports)) {
+    customSports.forEach(cs => {
+      if (cs && cs.id) {
+        map[cs.id] = {
+          id: cs.id,
+          name: cs.name,
+          emoji: cs.emoji || '⭐',
+          badgeClass: cs.badgeClass || 'bg-brand-600 text-white',
+          lightBg: cs.lightBg || '#F0F9FF',
+          accentColor: cs.accentColor || '#0284C7',
+          isCustom: true
+        };
+      }
+    });
+  }
+  return map;
+}
+
+function getAllSportsList(customSports = []) {
+  const map = getAllSportsMap(customSports);
+  return Object.values(map).filter(s => s.id !== 'planned');
+}
+
 // 10 Distinct Vibrant Color Palette for Energy / Mood
 const SCORE_SCALE = [
   { val: 1, color: '#DC2626', bgClass: 'bg-red-600', textClass: 'text-red-700', label: 'מותשת / ירוד מאוד' },
@@ -338,7 +363,9 @@ function getWorkoutColor(w) {
   if (!w) return '#0284C7';
   if (w.color) return w.color;
   if (w.isPlanned) return '#F59E0B';
-  const cfg = SPORT_CONFIGS[w.type];
+  const customList = (typeof window !== 'undefined' && window.app && window.app.customSports) ? window.app.customSports : [];
+  const sportsMap = getAllSportsMap(customList);
+  const cfg = sportsMap[w.type];
   return cfg ? cfg.accentColor : '#0EA5E9';
 }
 

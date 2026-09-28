@@ -93,6 +93,7 @@ class FirebaseService {
         if (data.recoveryLogs) window.app.recoveryLogs = data.recoveryLogs;
         if (data.personalRecords) window.app.personalRecords = data.personalRecords;
         if (data.teammates) window.app.recentTeammates = data.teammates;
+        if (data.customSports) window.app.customSports = data.customSports;
 
         window.app.saveStateLocally();
         window.app.render();
@@ -127,6 +128,7 @@ class FirebaseService {
     const recoveryLogs = (window.app && window.app.recoveryLogs) ? window.app.recoveryLogs : {};
     const personalRecords = (window.app && window.app.personalRecords) ? window.app.personalRecords : (typeof DEFAULT_PRS !== 'undefined' ? DEFAULT_PRS : []);
     const teammates = (window.app && window.app.recentTeammates) ? window.app.recentTeammates : [];
+    const customSports = (window.app && window.app.customSports) ? window.app.customSports : [];
 
     await this.db.ref('users/' + userKey).set({
       username: cleanName,
@@ -136,6 +138,7 @@ class FirebaseService {
       recoveryLogs: recoveryLogs,
       personalRecords: personalRecords,
       teammates: teammates,
+      customSports: customSports,
       updatedBySession: window.app ? window.app.sessionId : 'sess-reg',
       updatedAt: Date.now()
     });
@@ -173,6 +176,7 @@ class FirebaseService {
       if (data.recoveryLogs) window.app.recoveryLogs = data.recoveryLogs;
       if (data.personalRecords) window.app.personalRecords = data.personalRecords;
       if (data.teammates) window.app.recentTeammates = data.teammates;
+      if (data.customSports) window.app.customSports = data.customSports;
       window.app.saveStateLocally();
     }
 
@@ -191,6 +195,7 @@ class FirebaseService {
         recoveryLogs: window.app.recoveryLogs || {},
         personalRecords: window.app.personalRecords || [],
         teammates: window.app.recentTeammates || [],
+        customSports: window.app.customSports || [],
         updatedBySession: window.app ? window.app.sessionId : 'sess',
         updatedAt: Date.now()
       });
