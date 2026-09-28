@@ -511,6 +511,8 @@ class LibiFitApp {
   openEditWorkoutModal(workoutId) {
     const w = this.workouts.find(item => item.id === workoutId);
     if (!w) return;
+    this.detailWorkout = null;
+    this.completingWorkout = null;
     this.editingWorkout = JSON.parse(JSON.stringify(w));
     if (!this.editingWorkout.videoUrls) {
       this.editingWorkout.videoUrls = getWorkoutVideoUrls(this.editingWorkout);
@@ -518,7 +520,6 @@ class LibiFitApp {
     if (!this.editingWorkout.videoUrls || this.editingWorkout.videoUrls.length === 0) {
       this.editingWorkout.videoUrls = [''];
     }
-    this.closeModal();
     this.openModal('workoutForm');
   }
 

@@ -26,14 +26,16 @@ function renderModalContainer() {
 
 function renderWorkoutFormModal() {
   const w = app.editingWorkout;
+  if (!w) return '';
   const isGym = w.type === 'gym';
   const isVolleyball = w.type === 'volleyball';
   const isPlanned = !!w.isPlanned;
+  const isEditing = app.workouts.some(item => item.id === w.id);
 
   return `
     <div class="p-4 border-b border-slate-100 flex items-center justify-between ${isPlanned ? 'bg-amber-50' : 'bg-slate-50'}">
       <h3 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-        <span>${isPlanned ? '⏳ תכנון אימון עתידי' : '✨ רישום אימון'}</span>
+        <span>${isEditing ? (isPlanned ? '⏳ עריכת אימון מתוכנן' : '✏️ עריכת אימון') : (isPlanned ? '⏳ תכנון אימון עתידי' : '✨ רישום אימון')}</span>
       </h3>
       <button onclick="app.closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
         <i data-lucide="x" class="w-5 h-5"></i>
@@ -284,7 +286,7 @@ function renderWorkoutFormModal() {
         ביטול
       </button>
       <button type="button" onclick="app.saveWorkoutFromForm()" class="flex-2 ${isPlanned ? 'bg-amber-500 hover:bg-amber-600' : 'bg-brand-600 hover:bg-brand-700'} text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow transition active:scale-95">
-        ${isPlanned ? 'שמירת תכנון עתידי ⏳' : 'שמירת אימון ✨'}
+        ${isEditing ? 'שמירת עדכוני אימון ✓' : (isPlanned ? 'שמירת תכנון עתידי ⏳' : 'שמירת אימון ✨')}
       </button>
     </div>
   `;
