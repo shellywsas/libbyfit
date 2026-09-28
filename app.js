@@ -33,7 +33,6 @@ class LibiFitApp {
     this.authError = '';
     this.authLoading = false;
 
-    this.customSports = [];
     this.surveyActiveTab = 'daily';
     this.trendsMetric = 'energy';
     this.trendsDate = new Date();
@@ -103,46 +102,110 @@ class LibiFitApp {
     this.render();
   }
 
+  getStoragePrefix() {
+    if (window.firebaseService && window.firebaseService.currentUser && window.firebaseService.currentUser.key) {
+      return `libi_u_${window.firebaseService.currentUser.key}_`;
+    }
+    const saved = localStorage.getItem('libi_cloud_user');
+    if (saved) {
+      try {
+        const u = JSON.parse(saved);
+        if (u && u.key) return `libi_u_${u.key}_`;
+      } catch (e) {}
+    }
+    return 'libi_guest_';
+  }
+
   loadState() {
     try {
-      this.workouts = JSON.parse(localStorage.getItem('libi_workouts')) || JSON.parse(localStorage.getItem('libby_workouts')) || [];
-      this.templates = JSON.parse(localStorage.getItem('libi_templates')) || JSON.parse(localStorage.getItem('libby_templates')) || DEFAULT_TEMPLATES;
-      this.recoveryLogs = JSON.parse(localStorage.getItem('libi_recovery')) || JSON.parse(localStorage.getItem('libby_recovery')) || {};
-      this.personalRecords = JSON.parse(localStorage.getItem('libi_prs')) || JSON.parse(localStorage.getItem('libby_prs')) || DEFAULT_PRS;
-      this.customSports = JSON.parse(localStorage.getItem('libi_custom_sports')) || [];
+      const p = this.getStoragePrefix();
+      const isGuest = p === 'libi_guest_';
+
+      // For guests, check guest key, then fall back to legacy keys for migration
+      const rawWorkouts = localStorage.getItem(p + 'workouts') || (isGuest ? (localStorage.getItem('libi_workouts') || localStorage.getItem('libby_workouts')) : null);
+      const rawTemplates = localStorage.getItem(p + 'templates') || (isGuest ? (localStorage.getItem('libi_templates') || localStorage.getItem('libby_templates')) : null);
+      const rawRecovery = localStorage.getItem(p + 'recovery') || (isGuest ? (localStorage.getItem('libi_recovery') || localStorage.getItem('libby_recovery')) : null);
+      const rawPrs = localStorage.getItem(p + 'prs') || (isGuest ? (localStorage.getItem('libi_prs') || localStorage.getItem('libby_prs')) : null);
+      const rawCustomSports = localStorage.getItem(p + 'custom_sports') || (isGuest ? localStorage.getItem('libi_custom_sports') : null);
+
+      this.workouts = rawWorkouts ? JSON.parse(rawWorkouts) : [];
+      this.templates = rawTemplates ? JSON.parse(rawTemplates) : (typeof DEFAULT_TEMPLATES !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)) : []);
+      this.recoveryLogs = rawRecovery ? JSON.parse(rawRecovery) : {};
+      this.personalRecords = rawPrs ? JSON.parse(rawPrs) : (typeof DEFAULT_PRS !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_PRS)) : []);
+      this.customSports = rawCustomSports ? JSON.parse(rawCustomSports) : [];
     } catch (e) {
       console.error('Error loading state:', e);
       this.workouts = [];
-      this.templates = DEFAULT_TEMPLATES;
+      this.templates = typeof DEFAULT_TEMPLATES !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)) : [];
       this.recoveryLogs = {};
-      this.personalRecords = DEFAULT_PRS;
+      this.personalRecords = typeof DEFAULT_PRS !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_PRS)) : [];
       this.customSports = [];
     }
   }
 
   saveStateLocally() {
     try {
+      const p = this.getStoragePrefix();
       const wJson = JSON.stringify(this.workouts);
       const tJson = JSON.stringify(this.templates);
       const rJson = JSON.stringify(this.recoveryLogs);
       const pJson = JSON.stringify(this.personalRecords);
       const csJson = JSON.stringify(this.customSports);
 
-      // Save to primary Libi keys
-      localStorage.setItem('libi_workouts', wJson);
-      localStorage.setItem('libi_templates', tJson);
-      localStorage.setItem('libi_recovery', rJson);
-      localStorage.setItem('libi_prs', pJson);
-      localStorage.setItem('libi_custom_sports', csJson);
+      // Save to active user/guest prefix
+      localStorage.setItem(p + 'workouts', wJson);
+      localStorage.setItem(p + 'templates', tJson);
+      localStorage.setItem(p + 'recovery', rJson);
+      localStorage.setItem(p + 'prs', pJson);
+      localStorage.setItem(p + 'custom_sports', csJson);
 
-      // Also mirror to legacy keys for safety
-      localStorage.setItem('libby_workouts', wJson);
-      localStorage.setItem('libby_templates', tJson);
-      localStorage.setItem('libby_recovery', rJson);
-      localStorage.setItem('libby_prs', pJson);
+      // If guest, keep legacy keys synced for backward compatibility
+      if (p === 'libi_guest_') {
+        localStorage.setItem('libi_workouts', wJson);
+        localStorage.setItem('libi_templates', tJson);
+        localStorage.setItem('libi_recovery', rJson);
+        localStorage.setItem('libi_prs', pJson);
+        localStorage.setItem('libi_custom_sports', csJson);
+      }
     } catch (e) {
       console.error('Error saving state locally:', e);
     }
+  }
+
+  applyUserData(data = {}) {
+    this.workouts = Array.isArray(data.workouts)
+      ? data.workouts
+      : (data.workouts ? Object.values(data.workouts) : []);
+
+    this.templates = Array.isArray(data.templates)
+      ? data.templates
+      : (data.templates ? Object.values(data.templates) : (typeof DEFAULT_TEMPLATES !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)) : []));
+
+    this.recoveryLogs = (data.recoveryLogs && typeof data.recoveryLogs === 'object')
+      ? data.recoveryLogs
+      : {};
+
+    this.personalRecords = Array.isArray(data.personalRecords)
+      ? data.personalRecords
+      : (data.personalRecords ? Object.values(data.personalRecords) : (typeof DEFAULT_PRS !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_PRS)) : []));
+
+    this.customSports = Array.isArray(data.customSports)
+      ? data.customSports
+      : (data.customSports ? Object.values(data.customSports) : []);
+
+    this.recentTeammates = Array.isArray(data.teammates)
+      ? data.teammates
+      : (data.teammates ? Object.values(data.teammates) : ['נועה', 'מאי', 'שירה', 'עמית', 'דניאל', 'רוני']);
+  }
+
+  resetToFreshGuest() {
+    this.workouts = [];
+    this.templates = typeof DEFAULT_TEMPLATES !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)) : [];
+    this.recoveryLogs = {};
+    this.personalRecords = typeof DEFAULT_PRS !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_PRS)) : [];
+    this.customSports = [];
+    this.recentTeammates = ['נועה', 'מאי', 'שירה', 'עמית', 'דניאל', 'רוני'];
+    this.saveStateLocally();
   }
 
   saveState() {
@@ -1678,10 +1741,24 @@ class LibiFitApp {
     }
   }
 
+  togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      if (btn) btn.innerHTML = '🙈';
+    } else {
+      input.type = 'password';
+      if (btn) btn.innerHTML = '👁️';
+    }
+  }
+
   signOutFirebase() {
     if (confirm('האם את בטוחה שברצונך להתנתק מהחשבון?')) {
       window.firebaseService.signOut();
       this.closeModal();
+      this.authTab = 'login';
+      this.openModal('authModal');
       this.render();
     }
   }

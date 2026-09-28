@@ -88,13 +88,7 @@ class FirebaseService {
       }
 
       if (window.app && data.updatedBySession !== window.app.sessionId) {
-        if (data.workouts) window.app.workouts = data.workouts;
-        if (data.templates) window.app.templates = data.templates;
-        if (data.recoveryLogs) window.app.recoveryLogs = data.recoveryLogs;
-        if (data.personalRecords) window.app.personalRecords = data.personalRecords;
-        if (data.teammates) window.app.recentTeammates = data.teammates;
-        if (data.customSports) window.app.customSports = data.customSports;
-
+        window.app.applyUserData(data);
         window.app.saveStateLocally();
         window.app.render();
       }
@@ -123,12 +117,13 @@ class FirebaseService {
       throw new Error('שם המשתמש כבר תפוס! אם זה החשבון שלך, עברי ללשונית "התחברות".');
     }
 
-    const workouts = (window.app && window.app.workouts) ? window.app.workouts : [];
-    const templates = (window.app && window.app.templates) ? window.app.templates : (typeof DEFAULT_TEMPLATES !== 'undefined' ? DEFAULT_TEMPLATES : []);
-    const recoveryLogs = (window.app && window.app.recoveryLogs) ? window.app.recoveryLogs : {};
-    const personalRecords = (window.app && window.app.personalRecords) ? window.app.personalRecords : (typeof DEFAULT_PRS !== 'undefined' ? DEFAULT_PRS : []);
-    const teammates = (window.app && window.app.recentTeammates) ? window.app.recentTeammates : [];
-    const customSports = (window.app && window.app.customSports) ? window.app.customSports : [];
+    // Every new user starts with a completely fresh, private, independent account!
+    const workouts = [];
+    const templates = typeof DEFAULT_TEMPLATES !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)) : [];
+    const recoveryLogs = {};
+    const personalRecords = typeof DEFAULT_PRS !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_PRS)) : [];
+    const teammates = ['נועה', 'מאי', 'שירה', 'עמית', 'דניאל', 'רוני'];
+    const customSports = [];
 
     await this.db.ref('users/' + userKey).set({
       username: cleanName,
@@ -142,6 +137,22 @@ class FirebaseService {
       updatedBySession: window.app ? window.app.sessionId : 'sess-reg',
       updatedAt: Date.now()
     });
+
+    this.currentUser = { username: cleanName, key: userKey };
+    localStorage.setItem('libi_cloud_user', JSON.stringify(this.currentUser));
+    localStorage.setItem('libi_username', cleanName);
+
+    if (window.app) {
+      window.app.applyUserData({
+        workouts,
+        templates,
+        recoveryLogs,
+        personalRecords,
+        teammates,
+        customSports
+      });
+      window.app.saveStateLocally();
+    }
 
     this.connectUser(userKey, cleanName);
     return cleanName;
@@ -170,13 +181,13 @@ class FirebaseService {
       throw new Error('הסיסמה שגויה! נסי שוב.');
     }
 
+    // Set active user before saving state so scoped localStorage key matches
+    this.currentUser = { username: data.username || cleanName, key: userKey };
+    localStorage.setItem('libi_cloud_user', JSON.stringify(this.currentUser));
+    localStorage.setItem('libi_username', data.username || cleanName);
+
     if (window.app) {
-      if (data.workouts) window.app.workouts = data.workouts;
-      if (data.templates) window.app.templates = data.templates;
-      if (data.recoveryLogs) window.app.recoveryLogs = data.recoveryLogs;
-      if (data.personalRecords) window.app.personalRecords = data.personalRecords;
-      if (data.teammates) window.app.recentTeammates = data.teammates;
-      if (data.customSports) window.app.customSports = data.customSports;
+      window.app.applyUserData(data);
       window.app.saveStateLocally();
     }
 
@@ -246,9 +257,10 @@ class FirebaseService {
     }
     this.currentUser = null;
     localStorage.removeItem('libi_cloud_user');
+    localStorage.removeItem('libi_username');
 
     if (window.app) {
-      window.app.loadState();
+      window.app.resetToFreshGuest();
       window.app.render();
     }
   }

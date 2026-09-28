@@ -683,11 +683,20 @@ function renderAuthModal() {
         <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-2">
           <label class="font-bold text-xs text-slate-800 block">עדכון סיסמה:</label>
           <div class="flex gap-2">
-            <input
-              type="password"
-              id="profile-new-password"
-              placeholder="סיסמה חדשה"
-              class="flex-1 text-xs border border-slate-300 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-brand-500">
+            <div class="relative flex-1">
+              <input
+                type="password"
+                id="profile-new-password"
+                placeholder="סיסמה חדשה"
+                class="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 pl-9 font-mono focus:outline-none focus:border-brand-500">
+              <button
+                type="button"
+                onclick="app.togglePasswordVisibility('profile-new-password', this)"
+                class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none p-1"
+                title="הצג/הסתר סיסמה">
+                👁️
+              </button>
+            </div>
             <button
               onclick="app.updateUserPassword()"
               class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition active:scale-95 whitespace-nowrap">
@@ -769,12 +778,21 @@ function renderAuthModal() {
             </div>
             <div>
               <label class="text-[11px] font-bold text-slate-700 block mb-1">סיסמה</label>
-              <input
-                type="password"
-                id="auth-password"
-                required
-                placeholder="הסיסמה שלך"
-                class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:border-brand-500 focus:outline-none">
+              <div class="relative">
+                <input
+                  type="password"
+                  id="auth-password"
+                  required
+                  placeholder="הסיסמה שלך"
+                  class="w-full text-xs border border-slate-200 rounded-xl p-2.5 pl-10 focus:border-brand-500 focus:outline-none">
+                <button
+                  type="button"
+                  onclick="app.togglePasswordVisibility('auth-password', this)"
+                  class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none p-1"
+                  title="הצג/הסתר סיסמה">
+                  👁️
+                </button>
+              </div>
             </div>
             <button
               type="submit"
@@ -805,12 +823,21 @@ function renderAuthModal() {
             </div>
             <div>
               <label class="text-[11px] font-bold text-slate-700 block mb-1">בחרי סיסמה:</label>
-              <input
-                type="password"
-                id="reg-password"
-                required
-                placeholder="כל סיסמה שתרצי (למשל: 1234)"
-                class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:border-brand-500 focus:outline-none">
+              <div class="relative">
+                <input
+                  type="password"
+                  id="reg-password"
+                  required
+                  placeholder="כל סיסמה שתרצי (למשל: 1234)"
+                  class="w-full text-xs border border-slate-200 rounded-xl p-2.5 pl-10 focus:border-brand-500 focus:outline-none">
+                <button
+                  type="button"
+                  onclick="app.togglePasswordVisibility('reg-password', this)"
+                  class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none p-1"
+                  title="הצג/הסתר סיסמה">
+                  👁️
+                </button>
+              </div>
             </div>
             <button
               type="submit"
