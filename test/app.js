@@ -294,13 +294,34 @@ class LibiFitApp {
       <div class="bg-gradient-to-r from-purple-800 via-indigo-700 to-purple-900 text-white px-3 py-1.5 text-xs font-bold flex items-center justify-between shadow-xs sticky top-0 z-50">
         <span class="flex items-center gap-1.5 truncate">
           <span class="text-sm animate-pulse">🧪</span>
-          <span>סביבת בדיקות (Staging) • שינויים נבדקים כאן לפני העדכון הרשמי</span>
+          <span>אתר בדיקות • גרסה מעודכנת (13:50)</span>
         </span>
-        <a href="../" class="bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded text-[10px] whitespace-nowrap transition ml-1">
-          לאתר הרשמי ↗
-        </a>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button onclick="app.clearCacheAndReload()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 font-black px-2 py-0.5 rounded text-[10px] whitespace-nowrap shadow-xs active:scale-95 transition" title="ניקוי זיכרון מטמון וטעינת הגרסה הכי חדשה">
+            רענון גרסה 🔄
+          </button>
+          <a href="../" class="bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded text-[10px] whitespace-nowrap transition">
+            לאתר הרשמי ↗
+          </a>
+        </div>
       </div>
     `;
+  }
+
+  async clearCacheAndReload() {
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+      }
+    } catch (e) {
+      console.log('Cache clear error:', e);
+    }
+    window.location.href = window.location.pathname + '?v=' + Date.now();
   }
 
   renderWhatsAppBanner() {
