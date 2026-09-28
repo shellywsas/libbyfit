@@ -36,6 +36,7 @@ class LibiFitApp {
     this.customSports = [];
     this.surveyActiveTab = 'daily';
     this.trendsMetric = 'energy';
+    this.trendsDate = new Date();
     this.editingCustomSport = null;
   }
 
@@ -1191,6 +1192,19 @@ class LibiFitApp {
 
   setTrendsMetric(metric) {
     this.trendsMetric = metric;
+    this.render();
+  }
+
+  changeTrendsMonth(delta) {
+    if (!this.trendsDate) {
+      this.trendsDate = new Date();
+    }
+    this.trendsDate = new Date(this.trendsDate.getFullYear(), this.trendsDate.getMonth() + delta, 1);
+    this.render();
+  }
+
+  resetTrendsMonth() {
+    this.trendsDate = new Date();
     this.render();
   }
 

@@ -401,14 +401,18 @@ function renderRecoveryTab() {
 
 // --- MONTHLY TRENDS & WORKOUT BREAKDOWN ---
 function renderMonthlyTrendsView() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const targetDate = app.trendsDate || new Date();
+  const year = targetDate.getFullYear();
+  const month = targetDate.getMonth();
   const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
   const totalDays = new Date(year, month + 1, 0).getDate();
   const activeMetric = app.trendsMetric || 'energy'; // 'energy', 'mood', 'stress'
 
-  // Get days in current month that have logs
+  const hebrewMonthName = new Intl.DateTimeFormat('he-IL', { month: 'long', year: 'numeric' }).format(targetDate);
+  const now = new Date();
+  const isCurrentRealMonth = (year === now.getFullYear() && month === now.getMonth());
+
+  // Get days in selected month that have logs
   const monthLogs = [];
   let sumEnergy = 0, countEnergy = 0;
   let sumMood = 0, countMood = 0;
@@ -492,6 +496,28 @@ function renderMonthlyTrendsView() {
 
   return `
     <div class="space-y-4">
+      <!-- Month Navigation Bar -->
+      <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <button onclick="app.changeTrendsMonth(-1)" class="py-1.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition flex items-center gap-1 text-xs font-bold active:scale-95 shadow-2xs" title="חודש קודם">
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          <span>חודש קודם</span>
+        </button>
+        
+        <div class="text-center">
+          <span class="font-extrabold text-sm text-slate-800 block">${hebrewMonthName}</span>
+          ${!isCurrentRealMonth ? `
+            <button onclick="app.resetTrendsMonth()" class="text-[10px] text-brand-600 font-bold hover:underline">
+              חזרה לחודש הנוכחי ↩️
+            </button>
+          ` : `<span class="text-[10px] text-slate-400 font-medium">חודש נוכחי</span>`}
+        </div>
+
+        <button onclick="app.changeTrendsMonth(1)" class="py-1.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition flex items-center gap-1 text-xs font-bold active:scale-95 shadow-2xs" title="חודש הבא">
+          <span>חודש הבא</span>
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+      </div>
+
       <!-- Metric Selector Cards -->
       <div class="grid grid-cols-3 gap-2">
         <div onclick="app.setTrendsMetric('energy')" class="cursor-pointer p-2.5 rounded-2xl border text-center transition ${activeMetric === 'energy' ? 'bg-cyan-50 border-cyan-400 ring-2 ring-cyan-300' : 'bg-white border-slate-100'}">
@@ -515,14 +541,14 @@ function renderMonthlyTrendsView() {
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
         <div class="flex items-center justify-between">
           <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-            <span>📈 מגמת ${activeColor.name} (חודש נוכחי)</span>
+            <span>📈 מגמת ${activeColor.name} (${hebrewMonthName})</span>
           </h4>
           <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold">${points.length} תיעודים</span>
         </div>
 
         ${points.length === 0 ? `
           <div class="py-10 text-center text-slate-400 text-xs">
-            אין עדיין תיעודים של מדד זה החודש. מלאי את הסקר היומי כדי לראות את הגרף מתעורר לחיים! 🌱
+            אין עדיין תיעודים של מדד זה בחודש ${hebrewMonthName}.
           </div>
         ` : `
           <div class="w-full overflow-x-auto">
@@ -572,14 +598,14 @@ function renderMonthlyTrendsView() {
       <div class="bg-rose-50/70 rounded-2xl border border-rose-200 p-3.5 space-y-2">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1.5 text-xs font-bold text-rose-900">
-            <span>🩸 מעקב ווסת החודש</span>
+            <span>🩸 מעקב ווסת (${hebrewMonthName})</span>
           </div>
           <span class="text-xs font-extrabold px-2 py-0.5 rounded-full bg-rose-200 text-rose-800">
             ${periodDaysCount} ימי מחזור סומנו
           </span>
         </div>
         <p class="text-[11px] text-rose-700">
-          ${periodDaysCount > 0 ? `סומנו ${periodDaysCount} ימי מחזור בחודש זה. המשיכי לתעד כדי לקבל תובנות על קשר בין המחזור לרמת האנרגיה!` : 'טרם סומנו ימי מחזור בחודש הנוכחי.'}
+          ${periodDaysCount > 0 ? `סומנו ${periodDaysCount} ימי מחזור בחודש ${hebrewMonthName}. המשיכי לתעד כדי לקבל תובנות על קשר בין המחזור לרמת האנרגיה!` : `לא סומנו ימי מחזור בחודש ${hebrewMonthName}.`}
         </p>
       </div>
 
@@ -587,7 +613,7 @@ function renderMonthlyTrendsView() {
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
         <div class="flex items-center justify-between">
           <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-            <span>📊 פילוח אימונים חודשי</span>
+            <span>📊 פילוח אימונים (${hebrewMonthName})</span>
           </h4>
           <span class="text-xs font-extrabold bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full">
             ${monthWorkouts.length} אימונים שהושלמו 🎉
@@ -596,7 +622,7 @@ function renderMonthlyTrendsView() {
 
         ${monthWorkouts.length === 0 ? `
           <div class="py-6 text-center text-slate-400 text-xs">
-            אין אימונים שהושלמו עדיין בחודש זה.
+            אין אימונים שהושלמו בחודש ${hebrewMonthName}.
           </div>
         ` : `
           <div class="space-y-2.5 pt-1">
@@ -621,100 +647,6 @@ function renderMonthlyTrendsView() {
             }).join('')}
           </div>
         `}
-      </div>
-    </div>
-  `;
-}
-
-// --- PR PROGRESSION CHART HELPER ---
-function renderPRChart(pr) {
-  if (!pr || !pr.history || pr.history.length === 0) {
-    return '';
-  }
-
-  // If only 1 record point
-  if (pr.history.length === 1) {
-    return `
-      <div class="bg-amber-50/60 rounded-xl p-2.5 border border-amber-200/80 flex items-center justify-between text-xs">
-        <span class="text-amber-800 font-bold flex items-center gap-1">
-          <span>🌱</span>
-          <span>נקודת שיא התחלתית:</span>
-        </span>
-        <span class="text-amber-900 font-extrabold">${pr.currentPR} ${pr.unit}</span>
-      </div>
-    `;
-  }
-
-  // Multi-point progression chart
-  const sorted = [...pr.history].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-  const firstVal = Number(sorted[0].value) || 1;
-  const lastVal = Number(sorted[sorted.length - 1].value) || 1;
-  const diff = lastVal - firstVal;
-  const pctGain = firstVal > 0 ? Math.round((diff / firstVal) * 100) : 0;
-
-  const minVal = Math.min(...sorted.map(s => Number(s.value)));
-  const maxVal = Math.max(...sorted.map(s => Number(s.value)));
-  const valRange = maxVal === minVal ? 1 : (maxVal - minVal);
-
-  const w = 290;
-  const h = 75;
-  const px = 20;
-  const py = 15;
-  const plotW = w - px * 2;
-  const plotH = h - py * 2;
-
-  const points = sorted.map((item, idx) => {
-    const x = px + (idx / (sorted.length - 1)) * plotW;
-    const y = py + plotH - ((Number(item.value) - minVal) / valRange) * plotH;
-    return { x, y, val: item.value, date: item.date };
-  });
-
-  const polylineStr = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-  const areaStr = `${points[0].x.toFixed(1)},${(py + plotH).toFixed(1)} ${polylineStr} ${points[points.length - 1].x.toFixed(1)},${(py + plotH).toFixed(1)}`;
-
-  return `
-    <div class="bg-amber-50/40 rounded-xl p-2.5 border border-amber-100 space-y-1.5">
-      <div class="flex items-center justify-between text-[11px]">
-        <span class="font-bold text-amber-800 flex items-center gap-1">
-          <span>📈 גרף התקדמות:</span>
-        </span>
-        ${pctGain > 0 ? `
-          <span class="bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-md">
-            +${pctGain}% שיפור! 🚀
-          </span>
-        ` : (pctGain < 0 ? `
-          <span class="bg-slate-100 text-slate-600 font-bold px-1.5 py-0.2 rounded-md">
-            ${pctGain}%
-          </span>
-        ` : `
-          <span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded-md">
-            שיא יציב 🎯
-          </span>
-        `)}
-      </div>
-
-      <div class="w-full overflow-hidden">
-        <svg viewBox="0 0 ${w} ${h}" class="w-full h-auto overflow-visible">
-          <defs>
-            <linearGradient id="prGrad-${pr.id}" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.3"/>
-              <stop offset="100%" stop-color="#FEF3C7" stop-opacity="0.02"/>
-            </linearGradient>
-          </defs>
-          <polygon points="${areaStr}" fill="url(#prGrad-${pr.id})"/>
-          <polyline points="${polylineStr}" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          ${points.map(p => `
-            <g>
-              <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#FFFFFF" stroke="#D97706" stroke-width="2"/>
-              <text x="${p.x.toFixed(1)}" y="${(p.y - 5).toFixed(1)}" font-size="8" font-weight="bold" fill="#B45309" text-anchor="middle">${p.val}</text>
-            </g>
-          `).join('')}
-        </svg>
-      </div>
-
-      <div class="flex justify-between text-[9px] text-slate-400 pt-0.5">
-        <span>התחלה: ${sorted[0].date} (${sorted[0].value} ${pr.unit})</span>
-        <span>שיא נוכחי: ${sorted[sorted.length - 1].date}</span>
       </div>
     </div>
   `;
@@ -766,9 +698,6 @@ function renderRecordsTab() {
                 </button>
               </div>
             </div>
-
-            <!-- Progression Curve Graph -->
-            ${renderPRChart(pr)}
 
             <div class="bg-slate-50 rounded-xl p-2.5 space-y-1.5 text-xs">
               <div class="font-bold text-[11px] text-slate-400 flex justify-between">
