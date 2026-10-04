@@ -9,8 +9,8 @@ const DEFAULT_TEMPLATES = [
     description: 'סקוואט, היפ טראסט וקפיצות פליאומטריות לשיפור הניתור והעוצמה במגרש',
     exercises: [
       { name: 'סקוואט עם מוט', isBodyweight: false, defaultSets: 4, defaultReps: 8, defaultWeight: 40 },
-      { name: 'היפ טראסט', isBodyweight: false, defaultSets: 4, defaultReps: 10, defaultWeight: 50 },
-      { name: 'קפיצות בוקס (Box Jumps)', isBodyweight: true, defaultSets: 3, defaultReps: 10, defaultWeight: 0 },
+      { name: 'היפ טראסט', isBodyweight: false, defaultSets: 4, defaultReps: 8, defaultWeight: 50 },
+      { name: 'קפיצות בוקס (Box Jumps)', isBodyweight: true, defaultSets: 3, defaultReps: 8, defaultWeight: 0 },
       { name: 'לאנג\'ים בהליכה עם משקולות', isBodyweight: false, defaultSets: 3, defaultReps: 12, defaultWeight: 10 }
     ]
   },
@@ -23,8 +23,8 @@ const DEFAULT_TEMPLATES = [
     description: 'חיזוק כתפיים, גב, חזה ושרירי ליבה לשליטה בחבטות ובחסימות',
     exercises: [
       { name: 'מתח / מתח בגרביטון', isBodyweight: true, defaultSets: 3, defaultReps: 6, defaultWeight: 0 },
-      { name: 'לחיצת חזה בדמבלים', isBodyweight: false, defaultSets: 4, defaultReps: 10, defaultWeight: 12 },
-      { name: 'לחיצת כתפיים בישיבה', isBodyweight: false, defaultSets: 3, defaultReps: 10, defaultWeight: 8 },
+      { name: 'לחיצת חזה בדמבלים', isBodyweight: false, defaultSets: 4, defaultReps: 8, defaultWeight: 12 },
+      { name: 'לחיצת כתפיים בישיבה', isBodyweight: false, defaultSets: 3, defaultReps: 8, defaultWeight: 8 },
       { name: 'פלאנק סטטי (שניות)', isBodyweight: true, defaultSets: 3, defaultReps: 45, defaultWeight: 0 }
     ]
   },
@@ -38,7 +38,7 @@ const DEFAULT_TEMPLATES = [
     exercises: [
       { name: 'סקוואט גובלט', isBodyweight: false, defaultSets: 3, defaultReps: 12, defaultWeight: 14 },
       { name: 'שכיבות סמיכה', isBodyweight: true, defaultSets: 3, defaultReps: 12, defaultWeight: 0 },
-      { name: 'חתירה בדמבלים לגב', isBodyweight: false, defaultSets: 3, defaultReps: 10, defaultWeight: 10 },
+      { name: 'חתירה בדמבלים לגב', isBodyweight: false, defaultSets: 3, defaultReps: 8, defaultWeight: 10 },
       { name: 'הרמות רגליים לבטן', isBodyweight: true, defaultSets: 3, defaultReps: 15, defaultWeight: 0 }
     ]
   },

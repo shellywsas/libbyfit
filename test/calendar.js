@@ -254,7 +254,7 @@ function renderDailyCalendar() {
             <p class="text-xs text-slate-400">טרם מילאת סקר ליום זה</p>
           `}
         </div>
-        <button onclick="app.setTab('recovery')" class="text-xs text-brand-600 font-semibold bg-brand-50 px-2.5 py-1.5 rounded-xl hover:bg-brand-100">
+        <button type="button" onclick="app.openSurveyForDate('${dStr}')" class="text-xs text-brand-600 font-semibold bg-brand-50 px-2.5 py-1.5 rounded-xl hover:bg-brand-100">
           ${recovery ? 'עדכני' : 'מלאי סקר'}
         </button>
       </div>

@@ -21,7 +21,7 @@ function renderWorkoutDetailModal() {
       </button>
     </div>
 
-    <div class="p-4 overflow-y-auto space-y-3 flex-1 text-xs">
+    <div id="modal-scroll-body" class="p-4 overflow-y-auto space-y-3 flex-1 text-xs">
       ${w.isPlanned ? `
         <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-center justify-between">
           <span class="font-bold text-amber-800">אימון זה מסומן כמתוכנן ⏳</span>
@@ -86,7 +86,7 @@ function renderWorkoutDetailModal() {
                 ${ex.sets.map(s => `
                   <div class="bg-white p-1 rounded border border-slate-100 text-center">
                     <span class="text-slate-400 text-[9px] block">סט ${s.setNum}</span>
-                    <span class="font-bold">${ex.isBodyweight ? '' : (s.weight ? s.weight + ' ק"ג • ' : '')}${s.reps} חז'</span>
+                    <span class="font-bold">${ex.isBodyweight ? '' : (s.weight ? `${s.weight}${isNaN(Number(s.weight)) ? '' : ' ק"ג'} • ` : '')}${s.reps || 8} חז'</span>
                   </div>
                 `).join('')}
               </div>
@@ -129,16 +129,22 @@ function renderWorkoutDetailModal() {
       </div>
     </div>
 
-    <div class="p-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 gap-2">
-      <button onclick="app.deleteWorkout('${w.id}')" class="text-red-600 hover:bg-red-50 px-3 py-2 rounded-xl text-xs font-bold transition">
-        מחק אימון
-      </button>
+    <div class="p-3 border-t border-slate-100 flex flex-wrap justify-between items-center bg-slate-50 gap-2">
+      <div class="flex items-center gap-1.5">
+        <button type="button" onclick="app.deleteWorkout('${w.id}')" class="text-red-600 hover:bg-red-50 px-2.5 py-2 rounded-xl text-xs font-bold transition">
+          מחק אימון
+        </button>
+        <button type="button" onclick="app.duplicateWorkoutToCalendar('${w.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95" title="שכפול אימון זה ליומן בתאריך חדש או עתידי">
+          <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+          <span>הוסף שוב ליומן 📅</span>
+        </button>
+      </div>
       <div class="flex gap-2">
-        <button onclick="app.openEditWorkoutModal('${w.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95">
+        <button type="button" onclick="app.openEditWorkoutModal('${w.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95">
           <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
           <span>עריכת אימון ✏️</span>
         </button>
-        <button onclick="app.closeModal()" class="bg-brand-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-brand-700">
+        <button type="button" onclick="app.closeModal()" class="bg-brand-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-brand-700">
           סגור
         </button>
       </div>
@@ -159,14 +165,14 @@ function renderTemplateFormModal() {
   return `
     <div class="p-4 border-b border-slate-100 flex items-center justify-between" style="background-color: ${tColor}18;">
       <h3 class="font-bold text-sm flex items-center gap-1.5" style="color: ${tColor};">
-        <span>📋 יצירת תבנית אימון קבועה (${cfg.emoji} ${cfg.name})</span>
+        <span>${app.templates.some(t => t.id === tmpl.id) ? '✏️ עריכת תבנית אימון' : '📋 יצירת תבנית אימון קבועה'} (${cfg.emoji} ${cfg.name})</span>
       </h3>
-      <button onclick="app.closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
+      <button type="button" onclick="app.closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
     </div>
 
-    <div class="p-4 overflow-y-auto space-y-3 flex-1 text-xs">
+    <div id="modal-scroll-body" class="p-4 overflow-y-auto space-y-3 flex-1 text-xs">
       <!-- Sport Selector -->
       <div>
         <label class="font-bold text-slate-700 block mb-1">סוג הספורט עבור התבנית:</label>
@@ -252,7 +258,7 @@ function renderTemplateFormModal() {
           ${(tmpl.exercises || []).map((ex, exIdx) => `
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-2">
               <div class="flex items-center justify-between gap-2">
-                <input type="text" value="${ex.name}" onchange="app.updateTmplExName(${exIdx}, this.value)" placeholder="שם התרגיל" class="p-1.5 rounded-lg border border-slate-200 flex-1 font-bold">
+                <input type="text" value="${ex.name}" oninput="app.updateTmplExName(${exIdx}, this.value)" placeholder="שם התרגיל" class="p-1.5 rounded-lg border border-slate-200 flex-1 font-bold">
                 <label class="text-[10px] text-slate-500 flex items-center gap-1 cursor-pointer">
                   <input type="checkbox" ${ex.isBodyweight ? 'checked' : ''} onchange="app.toggleTmplExBodyweight(${exIdx}, this.checked)">
                   משקל גוף
@@ -265,15 +271,15 @@ function renderTemplateFormModal() {
               <div class="grid grid-cols-3 gap-2 text-[10px]">
                 <div>
                   <span class="text-slate-400 block">מס' סטים</span>
-                  <input type="number" value="${ex.defaultSets || 3}" onchange="app.updateTmplExField(${exIdx}, 'defaultSets', this.value)" class="w-full p-1 rounded border border-slate-200 text-center">
+                  <input type="number" value="${ex.defaultSets || 3}" oninput="app.updateTmplExField(${exIdx}, 'defaultSets', this.value)" class="w-full p-1 rounded border border-slate-200 text-center font-bold">
                 </div>
                 <div>
                   <span class="text-slate-400 block">חזרות לסט</span>
-                  <input type="number" value="${ex.defaultReps || 10}" onchange="app.updateTmplExField(${exIdx}, 'defaultReps', this.value)" class="w-full p-1 rounded border border-slate-200 text-center">
+                  <input type="number" value="${ex.defaultReps || 8}" placeholder="8" oninput="app.updateTmplExField(${exIdx}, 'defaultReps', this.value)" class="w-full p-1 rounded border border-slate-200 text-center font-bold">
                 </div>
                 <div>
-                  <span class="text-slate-400 block">משקל יעד (ק"ג)</span>
-                  <input type="number" ${ex.isBodyweight ? 'disabled placeholder="-"' : `value="${ex.defaultWeight || ''}"`} onchange="app.updateTmplExField(${exIdx}, 'defaultWeight', this.value)" class="w-full p-1 rounded border border-slate-200 text-center ${ex.isBodyweight ? 'bg-slate-200 text-slate-400' : ''}">
+                  <span class="text-slate-400 block">משקל יעד / גומיה</span>
+                  <input type="text" dir="auto" ${ex.isBodyweight ? 'disabled placeholder="משקל גוף"' : `value="${ex.defaultWeight !== undefined && ex.defaultWeight !== null ? ex.defaultWeight : ''}" placeholder='ק"ג או גומיה...'`} oninput="app.updateTmplExField(${exIdx}, 'defaultWeight', this.value)" class="w-full p-1 rounded border border-slate-200 text-center font-bold text-xs ${ex.isBodyweight ? 'bg-slate-200 text-slate-400' : ''}">
                 </div>
               </div>
             </div>
@@ -283,8 +289,8 @@ function renderTemplateFormModal() {
     </div>
 
     <div class="p-3 border-t border-slate-100 flex gap-2 bg-slate-50">
-      <button onclick="app.closeModal()" class="flex-1 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-xl">ביטול</button>
-      <button onclick="app.saveTemplateFromForm()" class="flex-2 bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow">שמירת תבנית ✨</button>
+      <button type="button" onclick="app.closeModal()" class="flex-1 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-xl">ביטול</button>
+      <button type="button" onclick="app.saveTemplateFromForm()" class="flex-2 bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow">${app.templates.some(t => t.id === tmpl.id) ? 'שמירת שינויים בתבנית ✓' : 'שמירת תבנית ✨'}</button>
     </div>
   `;
 }
