@@ -37,7 +37,6 @@ class LibiFitApp {
     this.trendsMetric = 'energy';
     this.trendsDate = new Date();
     this.editingCustomSport = null;
-    this.surveyDate = null;
   }
 
   getUserName() {
@@ -335,14 +334,6 @@ class LibiFitApp {
   }
 
   render() {
-    const mainEl = document.querySelector('main');
-    const savedMainScroll = mainEl ? mainEl.scrollTop : 0;
-    const modalBackdrop = document.getElementById('modal-backdrop');
-    const savedModalBackdropScroll = modalBackdrop ? modalBackdrop.scrollTop : 0;
-    const modalScrollBody = document.getElementById('modal-scroll-body');
-    const savedModalScroll = modalScrollBody ? modalScrollBody.scrollTop : 0;
-    const savedWindowScroll = window.scrollY || document.documentElement.scrollTop || 0;
-
     const appEl = document.getElementById('app');
     appEl.innerHTML = `
       ${this.renderStagingBanner()}
@@ -358,23 +349,6 @@ class LibiFitApp {
 
     if (window.lucide) {
       window.lucide.createIcons();
-    }
-
-    // Restore scroll positions accurately to avoid jumping
-    if (savedMainScroll > 0) {
-      const newMainEl = document.querySelector('main');
-      if (newMainEl) newMainEl.scrollTop = savedMainScroll;
-    }
-    if (savedModalBackdropScroll > 0) {
-      const newModalBackdrop = document.getElementById('modal-backdrop');
-      if (newModalBackdrop) newModalBackdrop.scrollTop = savedModalBackdropScroll;
-    }
-    if (savedModalScroll > 0) {
-      const newModalScrollBody = document.getElementById('modal-scroll-body');
-      if (newModalScrollBody) newModalScrollBody.scrollTop = savedModalScroll;
-    }
-    if (savedWindowScroll > 0) {
-      window.scrollTo(0, savedWindowScroll);
     }
   }
 
@@ -616,11 +590,6 @@ class LibiFitApp {
 
     const partnerEl = document.getElementById('w-partner');
     if (partnerEl) this.editingWorkout.partner = partnerEl.value;
-
-    const videoInputs = document.querySelectorAll('#workout-videos-container input');
-    if (videoInputs.length > 0) {
-      this.editingWorkout.videoUrls = Array.from(videoInputs).map(inp => inp.value);
-    }
   }
 
   toggleWorkoutPlanned(checked) {
@@ -737,7 +706,7 @@ class LibiFitApp {
           sets.push({
             setNum: s,
             weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
-            reps: ex.defaultReps || 8,
+            reps: ex.defaultReps || 10,
             done: false
           });
         }
@@ -759,9 +728,9 @@ class LibiFitApp {
       name: '',
       isBodyweight: false,
       sets: [
-        { setNum: 1, weight: '', reps: 8, done: false },
-        { setNum: 2, weight: '', reps: 8, done: false },
-        { setNum: 3, weight: '', reps: 8, done: false }
+        { setNum: 1, weight: '', reps: 10, done: false },
+        { setNum: 2, weight: '', reps: 10, done: false },
+        { setNum: 3, weight: '', reps: 10, done: false }
       ]
     });
     this.render();
@@ -784,7 +753,7 @@ class LibiFitApp {
     const ex = this.editingWorkout.exercises[idx];
     const nextNum = ex.sets.length + 1;
     const lastWeight = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].weight : '';
-    const lastReps = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].reps : 8;
+    const lastReps = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].reps : 10;
     ex.sets.push({
       setNum: nextNum,
       weight: lastWeight,
@@ -796,6 +765,20 @@ class LibiFitApp {
 
   updateExName(idx, val) {
     this.editingWorkout.exercises[idx].name = val;
+  }
+
+  addSetToExercise(idx) {
+    const ex = this.editingWorkout.exercises[idx];
+    const nextNum = ex.sets.length + 1;
+    const lastWeight = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].weight : '';
+    const lastReps = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].reps : 10;
+    ex.sets.push({
+      setNum: nextNum,
+      weight: lastWeight,
+      reps: lastReps,
+      done: false
+    });
+    this.render();
   }
 
   updateSetWeight(exIdx, sIdx, val) {
@@ -856,14 +839,6 @@ class LibiFitApp {
     if (window.confetti) {
       window.confetti({ particleCount: 35, spread: 60 });
     }
-
-    if (w.isPlanned) {
-      setTimeout(() => {
-        if (confirm('האימון המתוכנן נשמר ב-LibiFit! 📅\nהאם תרצי לפתוח ולהוסיף אותו גם לאפליקציית היומן בטלפון (Google Calendar)?')) {
-          this.addToGoogleCalendar(w);
-        }
-      }, 350);
-    }
   }
 
   // Completing a planned workout flow
@@ -897,11 +872,6 @@ class LibiFitApp {
 
     const partnerEl = document.getElementById('c-partner');
     if (partnerEl) this.completingWorkout.partner = partnerEl.value;
-
-    const videoInputs = document.querySelectorAll('#completing-videos-container input');
-    if (videoInputs.length > 0) {
-      this.completingWorkout.videoUrls = Array.from(videoInputs).map(inp => inp.value);
-    }
   }
 
   changeCompletingWorkoutType(typeId) {
@@ -942,7 +912,7 @@ class LibiFitApp {
           sets.push({
             setNum: s,
             weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
-            reps: ex.defaultReps || 8
+            reps: ex.defaultReps || 10
           });
         }
         return {
@@ -963,8 +933,8 @@ class LibiFitApp {
       name: '',
       isBodyweight: false,
       sets: [
-        { setNum: 1, weight: '', reps: 8 },
-        { setNum: 2, weight: '', reps: 8 }
+        { setNum: 1, weight: '', reps: 10 },
+        { setNum: 2, weight: '', reps: 10 }
       ]
     });
     this.render();
@@ -1027,9 +997,8 @@ class LibiFitApp {
     cw.title = document.getElementById('c-title')?.value.trim() || SPORT_CONFIGS[cw.type]?.name || 'אימון';
     cw.notes = document.getElementById('c-notes')?.value.trim() || '';
 
-    const partnerEl = document.getElementById('c-partner');
-    if (partnerEl) {
-      const partnerVal = partnerEl.value.trim();
+    if (cw.type === 'volleyball') {
+      const partnerVal = document.getElementById('c-partner')?.value.trim() || '';
       cw.partner = partnerVal;
       if (partnerVal) {
         partnerVal.split(',').forEach(p => this.saveTeammate(p.trim()));
@@ -1200,7 +1169,6 @@ class LibiFitApp {
       notes: tmpl.notes || tmpl.description || '',
       partner: tmpl.partner || '',
       videoUrl: '',
-      videoUrls: [''],
       isPlanned: false,
       exercises: (tmpl.exercises && tmpl.exercises.length > 0) ? tmpl.exercises.map(ex => {
         const sets = [];
@@ -1209,7 +1177,7 @@ class LibiFitApp {
           sets.push({
             setNum: s,
             weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
-            reps: ex.defaultReps || 8,
+            reps: ex.defaultReps || 10,
             done: false
           });
         }
@@ -1223,193 +1191,6 @@ class LibiFitApp {
 
     this.editingWorkout = newWorkout;
     this.openModal('workoutForm');
-  }
-
-  scheduleWorkoutFromTemplate(tmplId) {
-    const tmpl = this.templates.find(t => t.id === tmplId);
-    if (!tmpl) return;
-
-    const sport = tmpl.sport || 'gym';
-    const cfg = SPORT_CONFIGS[sport] || SPORT_CONFIGS.other;
-
-    const newWorkout = {
-      id: 'w-' + Date.now(),
-      date: this.selectedDateStr || this.formatDate(new Date()),
-      startTime: '18:00',
-      endTime: '19:30',
-      type: sport,
-      title: tmpl.name,
-      color: tmpl.color || cfg.accentColor,
-      notes: tmpl.notes || tmpl.description || '',
-      partner: tmpl.partner || '',
-      videoUrl: '',
-      videoUrls: [''],
-      isPlanned: true,
-      exercises: (tmpl.exercises && tmpl.exercises.length > 0) ? tmpl.exercises.map(ex => {
-        const sets = [];
-        const count = ex.defaultSets || 3;
-        for (let s = 1; s <= count; s++) {
-          sets.push({
-            setNum: s,
-            weight: ex.isBodyweight ? '' : (ex.defaultWeight || ''),
-            reps: ex.defaultReps || 8,
-            done: false
-          });
-        }
-        return {
-          name: ex.name,
-          isBodyweight: !!ex.isBodyweight,
-          sets: sets
-        };
-      }) : []
-    };
-
-    this.editingWorkout = newWorkout;
-    this.openModal('workoutForm');
-  }
-
-  duplicateWorkoutToCalendar(workoutId) {
-    const w = this.workouts.find(item => item.id === workoutId);
-    if (!w) return;
-    this.detailWorkout = null;
-    this.completingWorkout = null;
-
-    const copy = JSON.parse(JSON.stringify(w));
-    copy.id = 'w-' + Date.now();
-    copy.date = this.selectedDateStr || this.formatDate(new Date());
-    if (copy.exercises) {
-      copy.exercises.forEach(ex => {
-        if (ex.sets) {
-          ex.sets.forEach(s => { s.done = false; });
-        }
-      });
-    }
-    if (!copy.videoUrls) {
-      copy.videoUrls = getWorkoutVideoUrls(copy);
-    }
-    if (copy.videoUrls.length === 0) {
-      copy.videoUrls = [''];
-    }
-    this.editingWorkout = copy;
-    this.openModal('workoutForm');
-  }
-
-  getWorkoutCalendarDetails(w) {
-    if (!w) return null;
-    const sportsMap = typeof this.getAllSportsMap === 'function' ? this.getAllSportsMap() : SPORT_CONFIGS;
-    const sportName = sportsMap[w.type]?.name || 'אימון';
-    const title = w.title || `אימון ${sportName}`;
-
-    // Date & Time
-    const dStr = w.date || this.formatDate(new Date());
-    const dClean = dStr.replace(/-/g, '');
-    const sTime = (w.startTime || '18:00').replace(':', '') + '00';
-    let eTime = (w.endTime || '19:30').replace(':', '') + '00';
-
-    if (parseInt(eTime) <= parseInt(sTime)) {
-      const h = parseInt(sTime.slice(0, 2)) + 1;
-      eTime = (h < 10 ? '0' + h : '' + h) + sTime.slice(2);
-    }
-
-    const startDT = `${dClean}T${sTime}`;
-    const endDT = `${dClean}T${eTime}`;
-
-    let details = `סוג אימון: ${sportName}\n`;
-    if (w.partner) details += `שותפים: ${w.partner}\n`;
-    if (w.notes) details += `הערות: ${w.notes}\n`;
-
-    if (w.exercises && w.exercises.length > 0) {
-      details += `\nתרגילים:\n`;
-      w.exercises.forEach((ex, i) => {
-        if (!ex.name) return;
-        const setsCount = ex.sets ? ex.sets.length : 0;
-        const detailsStr = ex.sets ? ex.sets.map(s => `${ex.isBodyweight ? 'משקל גוף' : (s.weight ? s.weight + (isNaN(Number(s.weight)) ? '' : ' ק"ג') : 'משקל גוף')} x ${s.reps || 8}`).join(', ') : '';
-        details += `${i + 1}. ${ex.name}${setsCount > 0 ? ` (${setsCount} סטים: ${detailsStr})` : ''}\n`;
-      });
-    }
-
-    const vUrls = typeof getWorkoutVideoUrls === 'function' ? getWorkoutVideoUrls(w) : (w.videoUrls || []);
-    const cleanUrls = (vUrls || []).filter(Boolean);
-    if (cleanUrls.length > 0) {
-      details += `\nקישורים וסרטונים:\n${cleanUrls.join('\n')}\n`;
-    }
-
-    details += `\nנשלח מאפליקציית LibiFit 💙\nhttps://shellywsas.github.io/libbyfit/`;
-
-    return { title, date: dStr, startDT, endDT, details };
-  }
-
-  addToGoogleCalendar(workoutOrId) {
-    if (this.currentModal === 'workoutForm') {
-      this.syncWorkoutFormInputs();
-    }
-    const w = typeof workoutOrId === 'string'
-      ? this.workouts.find(item => item.id === workoutOrId)
-      : (workoutOrId || this.editingWorkout || this.detailWorkout);
-    if (!w) {
-      alert('לא נמצא אימון להוספה ליומן');
-      return;
-    }
-    const cal = this.getWorkoutCalendarDetails(w);
-    if (!cal) return;
-
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(cal.title)}&dates=${cal.startDT}/${cal.endDT}&details=${encodeURIComponent(cal.details)}`;
-    window.open(url, '_blank');
-  }
-
-  addToDeviceCalendar(workoutOrId) {
-    if (this.currentModal === 'workoutForm') {
-      this.syncWorkoutFormInputs();
-    }
-    const w = typeof workoutOrId === 'string'
-      ? this.workouts.find(item => item.id === workoutOrId)
-      : (workoutOrId || this.editingWorkout || this.detailWorkout);
-    if (!w) {
-      alert('לא נמצא אימון להוספה ליומן');
-      return;
-    }
-    const cal = this.getWorkoutCalendarDetails(w);
-    if (!cal) return;
-
-    const nowDT = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
-    const escapedDesc = cal.details.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
-    const escapedTitle = cal.title.replace(/\\/g, '\\\\').replace(/,/g, '\\,').replace(/;/g, '\\;');
-
-    const icsContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//LibiFit//Workout Calendar//HE',
-      'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH',
-      'BEGIN:VEVENT',
-      `UID:libifit-${w.id || Date.now()}@libbyfit.app`,
-      `DTSTAMP:${nowDT}`,
-      `DTSTART:${cal.startDT}`,
-      `DTEND:${cal.endDT}`,
-      `SUMMARY:${escapedTitle}`,
-      `DESCRIPTION:${escapedDesc}`,
-      'STATUS:CONFIRMED',
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ].join('\r\n');
-
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const downloadUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = `${cal.title.replace(/[\s\/\\?%*:|"<>]/g, '_')}_${cal.date}.ics`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
-  }
-
-  editTemplate(tmplId) {
-    const tmpl = this.templates.find(t => t.id === tmplId);
-    if (!tmpl) return;
-    this.editingTemplate = JSON.parse(JSON.stringify(tmpl));
-    if (!this.editingTemplate.exercises) this.editingTemplate.exercises = [];
-    this.openModal('templateForm');
   }
 
   addExerciseToTemplate() {
@@ -1418,8 +1199,8 @@ class LibiFitApp {
       name: '',
       isBodyweight: false,
       defaultSets: 3,
-      defaultReps: 8,
-      defaultWeight: '20'
+      defaultReps: 10,
+      defaultWeight: 20
     });
     this.render();
   }
@@ -1439,11 +1220,7 @@ class LibiFitApp {
   }
 
   updateTmplExField(idx, field, val) {
-    if (field === 'defaultWeight') {
-      this.editingTemplate.exercises[idx][field] = val;
-    } else {
-      this.editingTemplate.exercises[idx][field] = parseInt(val) || 0;
-    }
+    this.editingTemplate.exercises[idx][field] = parseInt(val) || 0;
   }
 
   saveTemplateFromForm() {
@@ -1462,12 +1239,7 @@ class LibiFitApp {
       tmpl.partner.split(',').forEach(p => this.saveTeammate(p.trim()));
     }
 
-    const existingIdx = this.templates.findIndex(t => t.id === tmpl.id);
-    if (existingIdx >= 0) {
-      this.templates[existingIdx] = tmpl;
-    } else {
-      this.templates.unshift(tmpl);
-    }
+    this.templates.unshift(tmpl);
     this.saveState();
     this.closeModal();
     alert('תבנית האימון נשמרה בהצלחה!');
@@ -1580,33 +1352,10 @@ class LibiFitApp {
     this.render();
   }
 
-  getSurveyDate() {
-    return this.surveyDate || this.formatDate(new Date());
-  }
-
-  setSurveyDate(dStr) {
-    this.surveyDate = dStr;
-    this.render();
-  }
-
-  shiftSurveyDate(delta) {
-    const cur = new Date(this.getSurveyDate());
-    cur.setDate(cur.getDate() + delta);
-    this.surveyDate = this.formatDate(cur);
-    this.render();
-  }
-
-  openSurveyForDate(dStr) {
-    this.surveyDate = dStr;
-    this.currentTab = 'recovery';
-    this.surveyActiveTab = 'daily';
-    this.render();
-  }
-
   setSurveyVal(type, val) {
-    const dateStr = this.getSurveyDate();
-    if (!this.recoveryLogs[dateStr]) {
-      this.recoveryLogs[dateStr] = {
+    const todayStr = this.formatDate(new Date());
+    if (!this.recoveryLogs[todayStr]) {
+      this.recoveryLogs[todayStr] = {
         fatigue: null,
         mood: null,
         stress: null,
@@ -1616,17 +1365,17 @@ class LibiFitApp {
     }
     const notesEl = document.getElementById('recovery-notes-input');
     if (notesEl) {
-      this.recoveryLogs[dateStr].notes = notesEl.value;
+      this.recoveryLogs[todayStr].notes = notesEl.value;
     }
-    this.recoveryLogs[dateStr][type] = val;
+    this.recoveryLogs[todayStr][type] = val;
     this.saveState();
     this.render();
   }
 
   togglePeriod() {
-    const dateStr = this.getSurveyDate();
-    if (!this.recoveryLogs[dateStr]) {
-      this.recoveryLogs[dateStr] = {
+    const todayStr = this.formatDate(new Date());
+    if (!this.recoveryLogs[todayStr]) {
+      this.recoveryLogs[todayStr] = {
         fatigue: null,
         mood: null,
         stress: null,
@@ -1634,37 +1383,37 @@ class LibiFitApp {
         period: { isPeriod: false, flow: 'medium', symptoms: [] }
       };
     }
-    if (!this.recoveryLogs[dateStr].period) {
-      this.recoveryLogs[dateStr].period = { isPeriod: false, flow: 'medium', symptoms: [] };
+    if (!this.recoveryLogs[todayStr].period) {
+      this.recoveryLogs[todayStr].period = { isPeriod: false, flow: 'medium', symptoms: [] };
     }
     const notesEl = document.getElementById('recovery-notes-input');
     if (notesEl) {
-      this.recoveryLogs[dateStr].notes = notesEl.value;
+      this.recoveryLogs[todayStr].notes = notesEl.value;
     }
-    this.recoveryLogs[dateStr].period.isPeriod = !this.recoveryLogs[dateStr].period.isPeriod;
+    this.recoveryLogs[todayStr].period.isPeriod = !this.recoveryLogs[todayStr].period.isPeriod;
     this.saveState();
     this.render();
   }
 
   setPeriodFlow(flow) {
-    const dateStr = this.getSurveyDate();
-    if (this.recoveryLogs[dateStr] && this.recoveryLogs[dateStr].period) {
-      this.recoveryLogs[dateStr].period.flow = flow;
+    const todayStr = this.formatDate(new Date());
+    if (this.recoveryLogs[todayStr] && this.recoveryLogs[todayStr].period) {
+      this.recoveryLogs[todayStr].period.flow = flow;
       this.render();
     }
   }
 
   togglePeriodSymptom(sym) {
-    const dateStr = this.getSurveyDate();
-    if (this.recoveryLogs[dateStr] && this.recoveryLogs[dateStr].period) {
-      const arr = this.recoveryLogs[dateStr].period.symptoms || [];
+    const todayStr = this.formatDate(new Date());
+    if (this.recoveryLogs[todayStr] && this.recoveryLogs[todayStr].period) {
+      const arr = this.recoveryLogs[todayStr].period.symptoms || [];
       const idx = arr.indexOf(sym);
       if (idx >= 0) {
         arr.splice(idx, 1);
       } else {
         arr.push(sym);
       }
-      this.recoveryLogs[dateStr].period.symptoms = arr;
+      this.recoveryLogs[todayStr].period.symptoms = arr;
       this.render();
     }
   }
@@ -1687,8 +1436,8 @@ class LibiFitApp {
   }
 
   saveTodayRecovery() {
-    const dateStr = this.getSurveyDate();
-    const log = this.recoveryLogs[dateStr];
+    const todayStr = this.formatDate(new Date());
+    const log = this.recoveryLogs[todayStr];
     if (!log || (log.fatigue === null && log.mood === null && log.stress === null && (!log.period || !log.period.isPeriod))) {
       alert('נא לבחור לפחות מדד אחד (עייפות, מצב רוח, סטרס או ווסת) לפני השמירה 😊');
       return;
@@ -1701,8 +1450,7 @@ class LibiFitApp {
     if (window.confetti) {
       window.confetti({ particleCount: 45, spread: 65, origin: { y: 0.8 } });
     }
-    const isToday = dateStr === this.formatDate(new Date());
-    alert(isToday ? 'הסקר היומי נשמר בהצלחה! 💙' : `הסקר לתאריך ${dateStr} נשמר בהצלחה! 💙`);
+    alert('הסקר היומי נשמר בהצלחה! 💙');
     this.render();
   }
 

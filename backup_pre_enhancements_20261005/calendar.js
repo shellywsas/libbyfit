@@ -254,7 +254,7 @@ function renderDailyCalendar() {
             <p class="text-xs text-slate-400">טרם מילאת סקר ליום זה</p>
           `}
         </div>
-        <button type="button" onclick="app.openSurveyForDate('${dStr}')" class="text-xs text-brand-600 font-semibold bg-brand-50 px-2.5 py-1.5 rounded-xl hover:bg-brand-100">
+        <button onclick="app.setTab('recovery')" class="text-xs text-brand-600 font-semibold bg-brand-50 px-2.5 py-1.5 rounded-xl hover:bg-brand-100">
           ${recovery ? 'עדכני' : 'מלאי סקר'}
         </button>
       </div>
@@ -304,25 +304,14 @@ function renderWorkoutCard(w, expanded = false) {
           </div>
         </div>
 
-        <div class="flex items-center gap-1.5 shrink-0">
-          <!-- Add to Real Phone Calendar Button -->
-          <button
-            onclick="event.stopPropagation(); app.addToGoogleCalendar('${w.id}')"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-2 rounded-xl text-xs flex items-center gap-1 shadow-xs active:scale-95 transition"
-            title="הוסיפי ליומן Google / הטלפון האמיתי">
-            <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-            <span class="hidden sm:inline text-[11px]">ליומן 📅</span>
-          </button>
-
-          <!-- Big checkmark button to complete and fill in workout -->
-          <button
-            onclick="event.stopPropagation(); app.completePlannedWorkout('${w.id}')"
-            class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm active:scale-95 transition"
-            title="לחצי כשסיימת את האימון כדי לעדכן מה עשית!">
-            <span>סמני כבוצע</span>
-            <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
-          </button>
-        </div>
+        <!-- Big checkmark button to complete and fill in workout -->
+        <button
+          onclick="event.stopPropagation(); app.completePlannedWorkout('${w.id}')"
+          class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm active:scale-95 transition"
+          title="לחצי כשסיימת את האימון כדי לעדכן מה עשית!">
+          <span>סמני כבוצע</span>
+          <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
+        </button>
       </div>
     `;
   }

@@ -91,14 +91,9 @@ function renderGymTab() {
                   </div>
                   ${tmpl.description ? `<p class="text-xs text-slate-500">${tmpl.description}</p>` : ''}
                 </div>
-                <div class="flex items-center gap-1">
-                  <button type="button" onclick="app.editTemplate('${tmpl.id}')" class="text-slate-400 hover:text-brand-600 p-1.5 rounded-lg hover:bg-slate-100 active:scale-90" title="עריכת תבנית">
-                    <i data-lucide="edit-3" class="w-4 h-4"></i>
-                  </button>
-                  <button type="button" onclick="app.deleteTemplate('${tmpl.id}')" class="text-slate-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 active:scale-90" title="מחק תבנית">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                  </button>
-                </div>
+                <button onclick="app.deleteTemplate('${tmpl.id}')" class="text-slate-300 hover:text-red-500 p-1.5 rounded-lg active:scale-90" title="מחק תבנית">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
               </div>
 
               ${tmpl.exercises && tmpl.exercises.length > 0 ? `
@@ -108,7 +103,7 @@ function renderGymTab() {
                     <div class="flex justify-between items-center text-[11px]">
                       <span class="font-medium">${idx + 1}. ${ex.name}</span>
                       <span class="text-slate-400 text-[10px]">
-                        ${ex.defaultSets} סטים × ${ex.defaultReps || 8} חזרות ${ex.isBodyweight ? '(משקל גוף)' : (ex.defaultWeight ? `• ${ex.defaultWeight}${isNaN(Number(ex.defaultWeight)) ? '' : ' ק"ג'}` : '')}
+                        ${ex.defaultSets} סטים × ${ex.defaultReps} חזרות ${ex.isBodyweight ? '(משקל גוף)' : (ex.defaultWeight ? `• ${ex.defaultWeight} ק"ג` : '')}
                       </span>
                     </div>
                   `).join('')}
@@ -129,16 +124,10 @@ function renderGymTab() {
                 </div>
               ` : ''}
 
-              <div class="grid grid-cols-2 gap-2">
-                <button type="button" onclick="app.startWorkoutFromTemplate('${tmpl.id}')" class="text-white font-bold py-2.5 px-2 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition" style="background-color: ${tColor};">
-                  <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
-                  <span>התחילי עכשיו</span>
-                </button>
-                <button type="button" onclick="app.scheduleWorkoutFromTemplate('${tmpl.id}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-2 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition" title="שיבוץ אימון זה ליומן בתאריך עתידי">
-                  <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                  <span>שבצי ביומן ⏳</span>
-                </button>
-              </div>
+              <button onclick="app.startWorkoutFromTemplate('${tmpl.id}')" class="w-full text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition" style="background-color: ${tColor};">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                התחילי אימון מתבנית זו
+              </button>
             </div>
           `;
         }).join('')}
@@ -150,9 +139,7 @@ function renderGymTab() {
 // --- TAB 3: DAILY VIBE, RECOVERY, STRESS & PERIOD TRACKER ---
 function renderRecoveryTab() {
   const todayStr = app.formatDate(new Date());
-  const activeSurveyDate = (app.getSurveyDate && app.getSurveyDate()) || todayStr;
-  const isTodaySurvey = (activeSurveyDate === todayStr);
-  const existing = app.recoveryLogs[activeSurveyDate] || {};
+  const existing = app.recoveryLogs[todayStr] || {};
   const fatigueVal = (existing.fatigue !== undefined && existing.fatigue !== null) ? Number(existing.fatigue) : null;
   const moodVal = (existing.mood !== undefined && existing.mood !== null) ? Number(existing.mood) : null;
   const stressVal = (existing.stress !== undefined && existing.stress !== null) ? Number(existing.stress) : null;
@@ -204,49 +191,10 @@ function renderRecoveryTab() {
 
       ${app.surveyActiveTab === 'trends' ? renderMonthlyTrendsView() : `
         <!-- Survey Card -->
-        <div id="survey-main-card" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-4">
-          <!-- Interactive Survey Date Bar -->
-          <div class="bg-teal-50/70 border border-teal-200 rounded-2xl p-2.5 flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-teal-900 flex items-center gap-1">
-                <i data-lucide="calendar" class="w-3.5 h-3.5 text-teal-600"></i>
-                <span>תאריך הסקר:</span>
-              </span>
-              <div class="flex items-center gap-1.5">
-                ${!isTodaySurvey ? `
-                  <button type="button" onclick="app.setSurveyDate('${todayStr}')" class="text-[10px] bg-teal-600 text-white font-bold px-2 py-0.5 rounded-lg hover:bg-teal-700 active:scale-95 transition">
-                    חזרה להיום ✨
-                  </button>
-                ` : ''}
-                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isTodaySurvey ? 'text-teal-700 bg-teal-100' : 'text-amber-800 bg-amber-100 border border-amber-300'}">
-                  ${isTodaySurvey ? 'היום ✨' : 'עריכה / רטרואקטיבי ⏳'}
-                </span>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-1.5 justify-between">
-              <button type="button" onclick="app.shiftSurveyDate(-1)" class="p-1.5 rounded-xl bg-white border border-teal-200 text-teal-700 hover:bg-teal-100 text-xs font-bold flex items-center gap-0.5 shadow-2xs active:scale-95 transition" title="יום קודם">
-                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                <span class="text-[11px]">יום קודם</span>
-              </button>
-              
-              <input
-                type="date"
-                value="${activeSurveyDate}"
-                max="${todayStr}"
-                onchange="app.setSurveyDate(this.value)"
-                class="flex-1 text-center font-bold text-xs p-1.5 rounded-xl border border-teal-200 bg-white text-teal-900 focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs">
-
-              <button type="button" onclick="app.shiftSurveyDate(1)" ${isTodaySurvey ? 'disabled class="opacity-40 p-1.5 rounded-xl bg-white border border-slate-200 text-slate-400 text-xs font-bold flex items-center gap-0.5"' : 'class="p-1.5 rounded-xl bg-white border border-teal-200 text-teal-700 hover:bg-teal-100 text-xs font-bold flex items-center gap-0.5 shadow-2xs active:scale-95 transition"'} title="יום הבא">
-                <span class="text-[11px]">יום הבא</span>
-                <i data-lucide="chevron-left" class="w-4 h-4"></i>
-              </button>
-            </div>
-            
-            <div class="text-[11px] text-center text-teal-800 font-semibold">
-              ${app.formatHebrewDate(activeSurveyDate)}
-              ${existing.fatigue || existing.mood || existing.stress ? ' • <span class="text-emerald-700 font-bold">סקר כבר ממולא ליום זה (ניתן לשנות)</span>' : ' • <span class="text-slate-500 font-medium">טרם מולא סקר לתאריך זה</span>'}
-            </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h4 class="font-bold text-sm text-slate-800">סקר יומי ל${app.getUserName()} (${app.formatHebrewDate(todayStr)})</h4>
+            <span class="text-[11px] text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full font-bold">היום</span>
           </div>
 
           <!-- SURVEY 1: FATIGUE & ENERGY (1-10) -->
@@ -410,9 +358,9 @@ function renderRecoveryTab() {
             <textarea id="recovery-notes-input" rows="2" placeholder="למשל: כתף ימין קצת תפוסה אחרי הסרבים אתמול, רגליים קלילות..." class="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-400">${existing.notes || ''}</textarea>
           </div>
 
-          <button type="button" onclick="app.saveTodayRecovery()" class="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold py-2.5 rounded-xl text-xs shadow hover:opacity-95 transition active:scale-95 flex items-center justify-center gap-1.5">
+          <button onclick="app.saveTodayRecovery()" class="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold py-2.5 rounded-xl text-xs shadow hover:opacity-95 transition active:scale-95 flex items-center justify-center gap-1.5">
             <i data-lucide="check" class="w-4 h-4"></i>
-            שמרי מדד ל${isTodaySurvey ? 'היום' : app.formatHebrewDate(activeSurveyDate)} ✓
+            שמרי מדד התאוששות, לחץ ומחזור להיום
           </button>
         </div>
 
@@ -428,25 +376,18 @@ function renderRecoveryTab() {
               const isPer = log.period && log.period.isPeriod;
 
               return `
-                <div class="bg-white p-3 rounded-xl border ${dStr === activeSurveyDate ? 'border-teal-400 ring-2 ring-teal-100' : 'border-slate-100'} shadow-sm flex items-center justify-between text-xs transition">
+                <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between text-xs">
                   <div>
                     <div class="flex items-center gap-1.5">
                       <span class="font-bold text-slate-700">${app.formatHebrewDate(dStr)}</span>
                       ${isPer ? `<span class="bg-rose-100 text-rose-700 font-bold px-1.5 py-0.2 rounded-md text-[10px]">🩸 ווסת</span>` : ''}
-                      ${dStr === activeSurveyDate ? `<span class="bg-teal-500 text-white text-[9.5px] font-bold px-1.5 py-0.2 rounded shadow-2xs">נבחר כעת</span>` : ''}
                     </div>
                     ${log.notes ? `<p class="text-slate-400 text-[11px] mt-0.5 truncate max-w-[190px]">"${log.notes}"</p>` : ''}
                   </div>
-                  <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-1 font-bold">
-                      ${fItem ? `<span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${fItem.color};">🔋${log.fatigue}</span>` : ''}
-                      ${mItem ? `<span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${mItem.color};">😊${log.mood}</span>` : ''}
-                      ${sItem ? `<span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${sItem.color};">⚡${log.stress}</span>` : ''}
-                    </div>
-                    <button type="button" onclick="app.setSurveyDate('${dStr}')" class="text-xs text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 font-bold px-2 py-1 rounded-lg flex items-center gap-0.5 transition active:scale-95" title="עריכת סקר ליום זה">
-                      <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                      <span>עריכה</span>
-                    </button>
+                  <div class="flex items-center gap-1 font-bold">
+                    ${fItem ? `<span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${fItem.color};">🔋${log.fatigue}</span>` : ''}
+                    ${mItem ? `<span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${mItem.color};">😊${log.mood}</span>` : ''}
+                    ${sItem ? `<span class="px-1.5 py-0.5 rounded text-white shadow-xs" style="background-color: ${sItem.color};">⚡${log.stress}</span>` : ''}
                   </div>
                 </div>
               `;
