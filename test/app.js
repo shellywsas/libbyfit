@@ -856,6 +856,14 @@ class LibiFitApp {
     if (window.confetti) {
       window.confetti({ particleCount: 35, spread: 60 });
     }
+
+    if (w.isPlanned) {
+      setTimeout(() => {
+        if (confirm('האימון המתוכנן נשמר ב-LibiFit! 📅\nהאם תרצי לפתוח ולהוסיף אותו גם לאפליקציית היומן בטלפון (Google Calendar)?')) {
+          this.addToGoogleCalendar(w);
+        }
+      }, 350);
+    }
   }
 
   // Completing a planned workout flow
@@ -1284,6 +1292,116 @@ class LibiFitApp {
     }
     this.editingWorkout = copy;
     this.openModal('workoutForm');
+  }
+
+  getWorkoutCalendarDetails(w) {
+    if (!w) return null;
+    const sportsMap = typeof this.getAllSportsMap === 'function' ? this.getAllSportsMap() : SPORT_CONFIGS;
+    const sportName = sportsMap[w.type]?.name || 'אימון';
+    const title = w.title || `אימון ${sportName}`;
+
+    // Date & Time
+    const dStr = w.date || this.formatDate(new Date());
+    const dClean = dStr.replace(/-/g, '');
+    const sTime = (w.startTime || '18:00').replace(':', '') + '00';
+    let eTime = (w.endTime || '19:30').replace(':', '') + '00';
+
+    if (parseInt(eTime) <= parseInt(sTime)) {
+      const h = parseInt(sTime.slice(0, 2)) + 1;
+      eTime = (h < 10 ? '0' + h : '' + h) + sTime.slice(2);
+    }
+
+    const startDT = `${dClean}T${sTime}`;
+    const endDT = `${dClean}T${eTime}`;
+
+    let details = `סוג אימון: ${sportName}\n`;
+    if (w.partner) details += `שותפים: ${w.partner}\n`;
+    if (w.notes) details += `הערות: ${w.notes}\n`;
+
+    if (w.exercises && w.exercises.length > 0) {
+      details += `\nתרגילים:\n`;
+      w.exercises.forEach((ex, i) => {
+        if (!ex.name) return;
+        const setsCount = ex.sets ? ex.sets.length : 0;
+        const detailsStr = ex.sets ? ex.sets.map(s => `${ex.isBodyweight ? 'משקל גוף' : (s.weight ? s.weight + (isNaN(Number(s.weight)) ? '' : ' ק"ג') : 'משקל גוף')} x ${s.reps || 8}`).join(', ') : '';
+        details += `${i + 1}. ${ex.name}${setsCount > 0 ? ` (${setsCount} סטים: ${detailsStr})` : ''}\n`;
+      });
+    }
+
+    const vUrls = typeof getWorkoutVideoUrls === 'function' ? getWorkoutVideoUrls(w) : (w.videoUrls || []);
+    const cleanUrls = (vUrls || []).filter(Boolean);
+    if (cleanUrls.length > 0) {
+      details += `\nקישורים וסרטונים:\n${cleanUrls.join('\n')}\n`;
+    }
+
+    details += `\nנשלח מאפליקציית LibiFit 💙\nhttps://shellywsas.github.io/libbyfit/`;
+
+    return { title, date: dStr, startDT, endDT, details };
+  }
+
+  addToGoogleCalendar(workoutOrId) {
+    if (this.currentModal === 'workoutForm') {
+      this.syncWorkoutFormInputs();
+    }
+    const w = typeof workoutOrId === 'string'
+      ? this.workouts.find(item => item.id === workoutOrId)
+      : (workoutOrId || this.editingWorkout || this.detailWorkout);
+    if (!w) {
+      alert('לא נמצא אימון להוספה ליומן');
+      return;
+    }
+    const cal = this.getWorkoutCalendarDetails(w);
+    if (!cal) return;
+
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(cal.title)}&dates=${cal.startDT}/${cal.endDT}&details=${encodeURIComponent(cal.details)}`;
+    window.open(url, '_blank');
+  }
+
+  addToDeviceCalendar(workoutOrId) {
+    if (this.currentModal === 'workoutForm') {
+      this.syncWorkoutFormInputs();
+    }
+    const w = typeof workoutOrId === 'string'
+      ? this.workouts.find(item => item.id === workoutOrId)
+      : (workoutOrId || this.editingWorkout || this.detailWorkout);
+    if (!w) {
+      alert('לא נמצא אימון להוספה ליומן');
+      return;
+    }
+    const cal = this.getWorkoutCalendarDetails(w);
+    if (!cal) return;
+
+    const nowDT = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+    const escapedDesc = cal.details.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+    const escapedTitle = cal.title.replace(/\\/g, '\\\\').replace(/,/g, '\\,').replace(/;/g, '\\;');
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//LibiFit//Workout Calendar//HE',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:libifit-${w.id || Date.now()}@libbyfit.app`,
+      `DTSTAMP:${nowDT}`,
+      `DTSTART:${cal.startDT}`,
+      `DTEND:${cal.endDT}`,
+      `SUMMARY:${escapedTitle}`,
+      `DESCRIPTION:${escapedDesc}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const downloadUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `${cal.title.replace(/[\s\/\\?%*:|"<>]/g, '_')}_${cal.date}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
   }
 
   editTemplate(tmplId) {

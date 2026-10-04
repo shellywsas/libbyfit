@@ -127,16 +127,41 @@ function renderWorkoutDetailModal() {
           </label>
         </div>
       </div>
+      <!-- Add to Real Phone Calendar (Google / Apple / Device) -->
+      <div class="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3 rounded-2xl space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+            <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i>
+            <span>הוספה לאפליקציית היומן האמיתית של הטלפון:</span>
+          </span>
+          <span class="text-[10px] text-blue-600 font-bold bg-white/90 px-2 py-0.5 rounded-full border border-blue-200">סנכרון מיידי 📲</span>
+        </div>
+        <p class="text-[11px] text-slate-500">לחצי על היומן המועדף עלייך כדי להוסיף את האימון עם כל הפרטים והשעות:</p>
+        <div class="grid grid-cols-2 gap-2 pt-0.5">
+          <button type="button" onclick="app.addToGoogleCalendar('${w.id}')" class="bg-white hover:bg-blue-50/80 border border-blue-300 text-blue-700 font-bold py-2 px-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95" title="פתיחה ישירה ב-Google Calendar">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Google Calendar 📅</span>
+          </button>
+          <button type="button" onclick="app.addToDeviceCalendar('${w.id}')" class="bg-white hover:bg-indigo-50/80 border border-indigo-300 text-indigo-700 font-bold py-2 px-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95" title="הורדה ופתיחה ביומן הטלפון (Apple Calendar / Android)">
+            <i data-lucide="smartphone" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <span>יומן הטלפון / Apple 📲</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="p-3 border-t border-slate-100 flex flex-wrap justify-between items-center bg-slate-50 gap-2">
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-1.5 flex-wrap">
         <button type="button" onclick="app.deleteWorkout('${w.id}')" class="text-red-600 hover:bg-red-50 px-2.5 py-2 rounded-xl text-xs font-bold transition">
           מחק אימון
         </button>
-        <button type="button" onclick="app.duplicateWorkoutToCalendar('${w.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95" title="שכפול אימון זה ליומן בתאריך חדש או עתידי">
+        <button type="button" onclick="app.addToGoogleCalendar('${w.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95" title="הוסף לאפליקציית Google Calendar">
           <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-          <span>הוסף שוב ליומן 📅</span>
+          <span>הוסף ל-Google Calendar 📅</span>
+        </button>
+        <button type="button" onclick="app.duplicateWorkoutToCalendar('${w.id}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95" title="שכפול אימון זה לתאריך חדש">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>שכפול 📋</span>
         </button>
       </div>
       <div class="flex gap-2">

@@ -279,6 +279,28 @@ function renderWorkoutFormModal() {
         <label class="text-[11px] font-bold text-slate-600">הערות ודגשים</label>
         <textarea id="w-notes" rows="2" oninput="if(app.editingWorkout) app.editingWorkout.notes = this.value" placeholder="דגשים לאימון..." class="w-full text-xs p-2 rounded-xl border border-slate-200 mt-1">${w.notes || ''}</textarea>
       </div>
+
+      <!-- Real Phone Calendar Export Card -->
+      <div class="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 p-2.5 rounded-2xl space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+            <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i>
+            <span>הוספה ליומן הטלפון האמיתי:</span>
+          </span>
+          <span class="text-[10px] text-blue-600 font-bold bg-white/90 px-2 py-0.5 rounded-full border border-blue-200">יומן חיצוני 📲</span>
+        </div>
+        <p class="text-[11px] text-slate-500">רוצה להוסיף את האימון כבר עכשיו ליומן של המכשיר עם תזכורת?</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="app.addToGoogleCalendar()" class="bg-white hover:bg-blue-50 border border-blue-300 text-blue-700 font-bold py-2 px-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95" title="פתיחה ב-Google Calendar">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Google Calendar 📅</span>
+          </button>
+          <button type="button" onclick="app.addToDeviceCalendar()" class="bg-white hover:bg-indigo-50 border border-indigo-300 text-indigo-700 font-bold py-2 px-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95" title="הורדה ופתיחה ביומן הטלפון (Apple / Android)">
+            <i data-lucide="smartphone" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <span>יומן הטלפון / Apple 📲</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="p-3 border-t border-slate-100 flex gap-2 bg-slate-50">
